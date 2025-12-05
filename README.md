@@ -1,36 +1,86 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🛡️ ENEM Dungeon
 
-## Getting Started
+![Project Status](https://img.shields.io/badge/status-development-orange)
+![Tech Stack](https://img.shields.io/badge/stack-Next.js_14-black)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
-First, run the development server:
+> **Transformando a maratona do ENEM em uma jornada épica de RPG.**
 
-```bash
+<div align="center">
+  <img src="public/logo.png" alt="Enem Dungeon Logo" width="200" />
+</div>
+
+## ⚔️ Sobre o Projeto
+
+O **ENEM Dungeon** é uma plataforma de *Game Learning* que utiliza a API pública do ENEM e Inteligência Artificial para transformar questões de prova em batalhas de RPG.
+
+O objetivo não é apenas responder questões, mas "sobreviver" à masmorra do conhecimento. Cada questão é um monstro gerado proceduralmente, onde o acerto gera XP/Loot e o erro causa dano real ao avatar do jogador.
+
+### 🌟 Destaques
+- **Gamificação Real:** Sistema de HP, XP, Níveis e Inventário persistente.
+- **AI Tutor (Em Breve):** Integração com **Ollama** para gerar explicações lúdicas e itens únicos baseados no desempenho.
+- **Engenharia de Software:** Uso de *Design Patterns* (Adapter/Factory) para normalizar dados externos.
+- **UX Imersiva:** Feedback visual e tátil com animações fluidas.
+
+---
+
+## 🛠️ Tech Stack & Decisões Arquiteturais
+
+Este projeto foi construído simulando um ambiente de produção escalável.
+
+- **Core:** [Next.js 14](https://nextjs.org/) (App Router) + TypeScript.
+- **Estilização:** [Tailwind CSS](https://tailwindcss.com/) + [Shadcn/ui](https://ui.shadcn.com/) (para componentes acessíveis e consistentes).
+- **State Management:** [Zustand](https://github.com/pmndrs/zustand) (escolhido pela simplicidade e performance superior ao Context API para estados de alta frequência como HP/XP).
+- **Animações:** [Framer Motion](https://www.framer.com/motion/) (feedback de dano/acerto).
+- **Data Fetching:** Integração com `enem-api` via Adapter Pattern.
+
+### 📂 Estrutura de Pastas (Feature-First)
+```text
+src/
+├── components/
+│   ├── game/          # Componentes isolados da lógica do jogo (BattleCard, HUD)
+│   └── ui/            # Componentes visuais reutilizáveis (Shadcn)
+├── lib/
+│   └── monster-factory.ts # Adapter que transforma JSON da API em Entidades de Jogo
+├── store/
+│   └── use-game-store.ts  # Store global (Zustand) para lógica de RPG
+└── types/             # Contratos de dados (Interfaces TypeScript estritas)
+🚀 Como Rodar Localmente
+Pré-requisitos: Node.js 18+ instalado.
+
+Clone o repositório
+
+Bash
+
+git clone [https://github.com/marcos-lima-dev/enem-dungeon.git](https://github.com/marcos-lima-dev/enem-dungeon.git)
+cd enem-dungeon
+Instale as dependências
+
+Bash
+
+npm install
+Inicie o servidor de desenvolvimento
+
+Bash
+
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Acesse http://localhost:3000 e prepare-se para a batalha!
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+🗺️ Roadmap
+[x] MVP: Loop principal de batalha (API -> Adapter -> Render).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+[x] Engine: Sistema de Vida, XP e Level Up (Zustand).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+[ ] UI: Cards de Batalha animados e HUD responsivo.
 
-## Learn More
+[ ] AI: Integração com Ollama para gerar "Loot" (Itens) após vitórias.
 
-To learn more about Next.js, take a look at the following resources:
+[ ] Progresso: Salvar estado do jogador no LocalStorage/Database.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+[ ] Modo Boss: Questões complexas com mecânicas de tempo.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+🤝 Contribuição
+Este é um projeto Open Source para fins de estudo e portfólio. Sinta-se à vontade para abrir Issues ou Pull Requests.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+👨‍💻 Autor
+Desenvolvido por Marcos Lima Focado em Front-End Engineering, UX e React Ecosystem.
