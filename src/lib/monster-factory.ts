@@ -1,9 +1,16 @@
-// src/lib/monster-factory.ts
-import { EnemQuestion, Monster } from "@/types/game";
+import { Monster, QuestaoLimpa } from "@/types/game";
 
-export function createMonsterFromQuestion(question: EnemQuestion): Monster {
-  // 1. Define Dificuldade pelo tamanho do texto ("Textão" = Boss)
-  const textLength = question.statement.length;
+export function createMonsterFromQuestion(data: any): Monster {
+  // Forçamos a tipagem para o formato que vem do JSON
+  const q = data as QuestaoLimpa;
+
+  // Proteção contra dados vazios
+  if (!q) {
+    throw new Error("Monstro inválido (Dados vazios)");
+  }
+
+  // 1. Dificuldade e HP
+  const textLength = q.enunciado ? q.enunciado.length : 0;
   let difficulty: Monster['difficulty'] = 'mob';
   let hp = 1;
   let maxHp = 1;
@@ -18,34 +25,32 @@ export function createMonsterFromQuestion(question: EnemQuestion): Monster {
     maxHp = 2;
   }
 
-  // 2. Define Categoria e Nome RPGístico
-  // Mapeamento simples de disciplinas para temas
-  const categoryMap: Record<string, string> = {
-    'matematica': 'Torre da Lógica',
-    'ciencias-natureza': 'Pântano Alquímico',
-    'ciencias-humanas': 'Ruínas da História',
-    'linguagens': 'Biblioteca Esquecida',
-  };
+  // 2. Tema e Categoria
+  const materia = q.materia ? q.materia.toLowerCase() : "";
+  let theme = 'Limbo do Conhecimento';
 
-  const theme = categoryMap[question.discipline] || 'Limbo do Conhecimento';
+  if (materia.includes('matem')) theme = 'Torre da Lógica';
+  else if (materia.includes('natureza') || materia.includes('fisica') || materia.includes('quimica') || materia.includes('biologia')) theme = 'Pântano Alquímico';
+  else if (materia.includes('humanas') || materia.includes('historia') || materia.includes('geografia') || materia.includes('filosofia')) theme = 'Ruínas da História';
+  else if (materia.includes('linguagens') || materia.includes('portugues') || materia.includes('arte')) theme = 'Biblioteca Esquecida';
 
-  // 3. Monta o Objeto Monstro
+  // 3. Montagem do Monstro
+  // CORREÇÃO AQUI: Usar q.alternativas (Português) em vez de q.alternatives
+  const options = q.alternativas ? q.alternativas.map((alt) => ({
+    id: alt.letra,
+    text: alt.texto,
+    isCorrect: alt.letra === q.respostaCorreta 
+  })) : [];
+
   return {
-    id: question.id,
-    name: `${theme} - ${difficulty.toUpperCase()}`, // Ex: "Torre da Lógica - BOSS"
-    category: question.discipline,
+    id: q.id,
+    name: `${theme} - ${difficulty.toUpperCase()}`,
+    category: theme,
     difficulty,
     hp,
     maxHp,
-    fullText: question.statement,
-    options: question.alternatives.map((alt, index) => {
-      // Transforma índice 0, 1, 2 em "A", "B", "C"
-      const letter = String.fromCharCode(65 + index); 
-      return {
-        id: letter,
-        text: alt,
-        isCorrect: letter === question.correctAlternative // A API já manda "A", "B"...
-      };
-    })
+    fullText: q.enunciado,
+    imageUrl: q.imagemUrl,
+    options: options
   };
 }

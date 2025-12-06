@@ -1,82 +1,141 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { createMonsterFromQuestion } from "@/lib/monster-factory";
 import { useGameStore } from "@/store/use-game-store";
-import { EnemQuestion } from "@/types/game";
+import { EnemQuestion, Monster } from "@/types/game"; // Importei Monster para tipagem
+import { BattleCard } from "@/components/game/BattleCard";
+import { Loader2, Heart, Trophy, Zap } from "lucide-react";
+import { toast } from "sonner";
 
 export default function Home() {
-  // Conecta com a Store Global
   const { hp, xp, level, takeDamage, addXp } = useGameStore();
-  
-  // Estado local apenas para carregar a questão
   const [loading, setLoading] = useState(false);
-  const [question, setQuestion] = useState<any>(null);
+  // Melhoria: Tipagem explícita em vez de 'any'
+  const [question, setQuestion] = useState<Monster | null>(null);
 
-  // Simula buscar na API do ENEM
   async function fetchNewMonster() {
     setLoading(true);
     try {
-      // Pegando uma questão real da API do yunger7
-      const res = await fetch("https://api.enem.dev/v1/exams/2023/questions?limit=1");
-      const data = await res.json();
+      // Offset aleatório para variar as questões
+      const randomOffset = Math.floor(Math.random() * 1000);
       
-      // A Mágica: Transforma JSON chato em Monstro RPG
+      // Chama nossa API Route (Túnel)
+      const res = await fetch(`/api/monster`);
+      
+      // Melhoria: Verifica se a resposta HTTP foi sucesso (200-299)
+      if (!res.ok) {
+        throw new Error("Falha na comunicação com a masmorra");
+      }
+
+      const data = await res.json();
+
+      // Melhoria: Garante que recebemos dados antes de tentar acessar o índice [0]
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        throw new Error("Nenhum monstro encontrado nesta região");
+      }
+
+      // Converte para nosso formato de RPG
       const monster = createMonsterFromQuestion(data[0] as EnemQuestion);
       setQuestion(monster);
+
     } catch (error) {
-      console.error("Erro ao caçar monstro:", error);
+      console.error(error);
+      toast.error("Erro ao invocar monstro. A masmorra está instável.");
     } finally {
       setLoading(false);
     }
   }
 
+  // Lógica de Combate
+  const handleAttack = (isCorrect: boolean) => {
+    if (isCorrect) {
+      toast.success("CRÍTICO! Monstro derrotado!");
+      addXp(50);
+      
+      // Pequeno delay para dar tempo de ver a animação de acerto antes de limpar
+      setTimeout(() => {
+        setQuestion(null); 
+      }, 1000);
+      
+    } else {
+      toast.error("DANO SOFRIDO! -1 Coração");
+      takeDamage(1);
+    }
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24 gap-8">
-      {/* HUD (Heads-Up Display) */}
-      <div className="flex gap-8 text-xl font-bold border p-4 rounded-lg bg-slate-100">
-        <span className="text-red-600">❤ HP: {hp}</span>
-        <span className="text-blue-600">✨ XP: {xp}</span>
-        <span className="text-purple-600">⚔ Lvl: {level}</span>
+    <main className="flex min-h-screen flex-col items-center justify-start p-4 md:p-12 gap-8 bg-slate-950 text-slate-100">
+      
+      {/* HUD Superior (Heads-Up Display) */}
+      <div className="w-full max-w-2xl flex justify-between items-center bg-slate-900/90 p-4 rounded-xl border border-slate-800 backdrop-blur sticky top-4 z-20 shadow-xl shadow-purple-900/10">
+        
+        {/* Vida */}
+        <div className="flex items-center gap-2 text-red-500 font-bold animate-pulse">
+          <Heart className="fill-red-500 h-6 w-6" />
+          <span className="text-xl">{hp}</span>
+        </div>
+        
+        {/* Barra de XP */}
+        <div className="flex flex-col items-center w-full max-w-[120px] md:max-w-[200px]">
+           <span className="text-[10px] md:text-xs text-slate-400 uppercase tracking-widest font-bold">Nível {level}</span>
+           <div className="w-full h-2 bg-slate-800 rounded-full mt-1 overflow-hidden border border-slate-700">
+              <div 
+                className="h-full bg-gradient-to-r from-purple-600 to-pink-500 transition-all duration-500 ease-out" 
+                style={{ width: `${(xp % 100)}%` }}
+              ></div>
+           </div>
+        </div>
+
+        {/* Pontuação */}
+        <div className="flex items-center gap-2 text-yellow-500 font-bold">
+          <span className="text-xl">{xp}</span>
+          <Trophy className="h-6 w-6 fill-yellow-500/20" />
+        </div>
       </div>
 
-      {/* Arena de Batalha */}
-      <div className="flex flex-col gap-4 items-center">
+      {/* Área Principal */}
+      <div className="w-full flex flex-col items-center justify-center flex-1 max-w-4xl relative z-10">
         {!question ? (
-          <Button onClick={fetchNewMonster} disabled={loading}>
-            {loading ? "Invocando..." : "Caçar Monstro"}
-          </Button>
-        ) : (
-          <div className="border p-6 rounded-xl max-w-2xl shadow-lg">
-            <h2 className="text-2xl font-bold mb-2">{question.name}</h2>
-            <div className="bg-slate-50 p-4 rounded mb-4 max-h-60 overflow-y-auto">
-              <p className="text-sm">{question.fullText}</p>
+          <div className="text-center space-y-8 animate-in fade-in zoom-in duration-700 slide-in-from-bottom-10">
+            
+            {/* Logo Oficial */}
+            <div className="relative w-64 h-64 md:w-80 md:h-80 mx-auto group cursor-pointer">
+              <div className="absolute inset-0 bg-purple-600/20 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+              <Image 
+                src="/logo.png" 
+                alt="ENEM Dungeon Logo"
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                className="object-contain drop-shadow-[0_0_25px_rgba(168,85,247,0.5)] transition-transform duration-500 group-hover:scale-105 group-hover:-rotate-1"
+                priority
+              />
             </div>
 
-            <div className="grid grid-cols-1 gap-2">
-              {question.options.map((opt: any) => (
-                <Button 
-                  key={opt.id} 
-                  variant="outline"
-                  className="justify-start h-auto py-3 px-4 text-left hover:bg-slate-100"
-                  onClick={() => {
-                    if (opt.isCorrect) {
-                      alert("CRÍTICO! Você acertou!");
-                      addXp(50);
-                      setQuestion(null); // Mata o monstro
-                    } else {
-                      alert("DANO! Você errou.");
-                      takeDamage(1);
-                    }
-                  }}
-                >
-                  <span className="font-bold mr-2 text-slate-500">[{opt.id}]</span> 
-                  {opt.text}
-                </Button>
-              ))}
+            <div className="space-y-4">
+              <p className="text-slate-400 text-lg max-w-md mx-auto leading-relaxed">
+                A masmorra aguarda. Prove seu conhecimento e torne-se um <span className="text-purple-400 font-bold">Guardião do Saber</span>.
+              </p>
+              
+              <Button 
+                size="lg" 
+                className="bg-purple-600 hover:bg-purple-500 text-white font-bold text-lg px-10 py-7 h-auto rounded-xl shadow-[0_0_30px_rgba(147,51,234,0.4)] border border-purple-400/30 transition-all hover:scale-105 active:scale-95"
+                onClick={fetchNewMonster} 
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="mr-3 h-6 w-6 animate-spin" />
+                ) : (
+                  <Zap className="mr-3 h-6 w-6 fill-white" />
+                )}
+                {loading ? "Invocando..." : "ENTRAR NA MASMORRA"}
+              </Button>
             </div>
           </div>
+        ) : (
+          <BattleCard monster={question} onAttack={handleAttack} />
         )}
       </div>
     </main>
