@@ -7,7 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Swords, Skull, Image as ImageIcon } from "lucide-react"; // Adicionei ícone de imagem
+import { Swords, Skull, Image as ImageIcon } from "lucide-react";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface BattleCardProps {
   monster: Monster;
@@ -25,9 +27,7 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
   };
 
   const handleOptionClick = (optionId: string, isCorrect: boolean) => {
-    // Evita cliques múltiplos
     if (selectedOption !== null) return;
-
     setSelectedOption(optionId);
     
     if (!isCorrect) {
@@ -38,71 +38,74 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
     setTimeout(() => {
       onAttack(isCorrect);
       setSelectedOption(null);
-    }, 800);
+    }, 1000);
   };
 
   return (
     <motion.div
       animate={isShaking ? { x: [-10, 10, -10, 10, 0] } : {}}
       transition={{ duration: 0.4 }}
-      className="w-full max-w-3xl" // Aumentei um pouco a largura para caber melhor imagens
+      className="w-full max-w-4xl"
     >
       <Card className="border-2 border-slate-800 shadow-xl bg-slate-950 text-slate-100">
         
-        {/* --- CABEÇALHO --- */}
+        {/* Cabeçalho */}
         <CardHeader className="border-b border-slate-800 pb-4">
           <div className="flex justify-between items-center">
             <div className="flex gap-2 items-center">
               <Badge className={`${difficultyColor[monster.difficulty]} hover:${difficultyColor[monster.difficulty]}`}>
                 {monster.difficulty.toUpperCase()}
               </Badge>
-              <CardTitle className="text-xl text-yellow-500 flex items-center gap-2">
+              <CardTitle className="text-xl text-yellow-500 flex items-center gap-2 font-bold">
                 {monster.difficulty === 'boss' ? <Skull className="h-5 w-5" /> : <Swords className="h-5 w-5" />}
                 {monster.name}
               </CardTitle>
             </div>
             
             <div className="w-1/3 flex flex-col items-end gap-1">
-              <span className="text-xs text-slate-400">HP Inimigo</span>
+              <span className="text-xs text-slate-400 font-bold">HP Inimigo</span>
               <Progress value={(monster.hp / monster.maxHp) * 100} className="h-2 bg-slate-800" />
             </div>
           </div>
         </CardHeader>
 
-        {/* --- CONTEÚDO --- */}
+        {/* Conteúdo */}
         <CardContent className="pt-6 space-y-6">
           
-          {/* 1. Texto da Questão */}
-          <div className="prose prose-invert max-w-none text-slate-300 leading-relaxed text-sm md:text-base bg-slate-900/50 p-4 rounded-lg border border-slate-800 whitespace-pre-line">
-            {monster.fullText}
+          {/* Texto da Questão (Markdown para Tabelas) */}
+          <div className="prose prose-invert max-w-none text-slate-300 leading-relaxed text-sm md:text-base bg-slate-900/50 p-6 rounded-lg border border-slate-800">
+            <ReactMarkdown 
+              remarkPlugins={[remarkGfm]}
+              components={{
+                img: ({node, ...props}) => <img className="mx-auto rounded-lg max-h-96 object-contain my-4" {...props} />
+              }}
+            >
+              {monster.fullText}
+            </ReactMarkdown>
           </div>
 
-          {/* 2. Imagem (NOVO BLOCO) - Só renderiza se existir */}
+          {/* Imagem Externa (Se houver) */}
           {monster.imageUrl && (
-            <div className="relative w-full h-64 md:h-80 rounded-lg overflow-hidden border border-slate-700 bg-black flex items-center justify-center group">
-              {/* Usando img normal para garantir compatibilidade com qualquer URL externa sem configurar next.config.js agora */}
+            <div className="relative w-full h-72 rounded-lg overflow-hidden border border-slate-700 bg-black flex items-center justify-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
                 src={monster.imageUrl} 
-                alt="Desafio visual da questão" 
-                className="object-contain w-full h-full transition-transform duration-500 group-hover:scale-105"
+                alt="Imagem da questão" 
+                className="object-contain w-full h-full"
               />
-              <div className="absolute top-2 right-2 bg-black/60 p-1 rounded-md">
-                <ImageIcon className="w-4 h-4 text-slate-400" />
-              </div>
             </div>
           )}
 
-          {/* 3. Alternativas */}
+          {/* Botões de Alternativa */}
           <div className="grid gap-3">
             {monster.options.map((opt) => {
               let btnClass = "border-slate-700 hover:bg-slate-800 hover:text-slate-100 justify-start text-left h-auto py-4";
 
               if (selectedOption === opt.id) {
                 if (opt.isCorrect) {
-                  btnClass = "bg-green-600 hover:bg-green-700 border-green-500 text-white justify-start text-left h-auto py-4 ring-2 ring-green-400/50";
+                  btnClass = "bg-green-600 hover:bg-green-700 border-green-500 text-white justify-start text-left h-auto py-4";
                 } else {
-                  btnClass = "bg-red-600 hover:bg-red-700 border-red-500 text-white justify-start text-left h-auto py-4 ring-2 ring-red-400/50";
+                  btnClass = "bg-red-600 hover:bg-red-700 border-red-500 text-white justify-start text-left h-auto py-4";
                 }
               }
 
@@ -126,7 +129,7 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
           </div>
         </CardContent>
         
-        <CardFooter className="justify-center pt-2 pb-6 text-xs text-slate-500 font-mono">
+        <CardFooter className="justify-center pt-2 pb-6 text-xs text-slate-500">
           Escolha com sabedoria. Um erro custará sua vida.
         </CardFooter>
       </Card>

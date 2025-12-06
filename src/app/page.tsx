@@ -1,63 +1,63 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { createMonsterFromQuestion } from "@/lib/monster-factory";
 import { useGameStore } from "@/store/use-game-store";
-import { EnemQuestion, Monster } from "@/types/game"; // Importei Monster para tipagem
+import { EnemQuestion, Monster } from "@/types/game";
 import { BattleCard } from "@/components/game/BattleCard";
-import { Loader2, Heart, Trophy, Zap } from "lucide-react";
+import { Loader2, Heart, Trophy, Zap, Skull } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Home() {
-  const { hp, xp, level, takeDamage, addXp } = useGameStore();
+  const { hp, xp, level, takeDamage, addXp, resetGame } = useGameStore();
   const [loading, setLoading] = useState(false);
-  // Melhoria: Tipagem explícita em vez de 'any'
   const [question, setQuestion] = useState<Monster | null>(null);
+  const [isGameOver, setIsGameOver] = useState(false);
+
+  useEffect(() => {
+    if (hp <= 0 && !isGameOver) {
+      setIsGameOver(true);
+      setQuestion(null);
+      toast.error("VOCÊ FOI DERROTADO!");
+    }
+  }, [hp, isGameOver]);
 
   async function fetchNewMonster() {
+    if (hp <= 0) return;
+
     setLoading(true);
     try {
-      // Offset aleatório para variar as questões
-      const randomOffset = Math.floor(Math.random() * 1000);
+      const res = await fetch(`/api/monster?t=${Date.now()}`);
       
-      // Chama nossa API Route (Túnel)
-      const res = await fetch(`/api/monster`);
-      
-      // Melhoria: Verifica se a resposta HTTP foi sucesso (200-299)
-      if (!res.ok) {
-        throw new Error("Falha na comunicação com a masmorra");
-      }
+      if (!res.ok) throw new Error("Falha na comunicação");
 
       const data = await res.json();
 
-      // Melhoria: Garante que recebemos dados antes de tentar acessar o índice [0]
       if (!data || !Array.isArray(data) || data.length === 0) {
-        throw new Error("Nenhum monstro encontrado nesta região");
+        throw new Error("Masmorra vazia");
       }
 
-      // Converte para nosso formato de RPG
       const monster = createMonsterFromQuestion(data[0] as EnemQuestion);
       setQuestion(monster);
 
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao invocar monstro. A masmorra está instável.");
+      toast.error("Erro ao invocar monstro.");
     } finally {
       setLoading(false);
     }
   }
 
-  // Lógica de Combate
-  const handleAttack = (isCorrect: boolean) => {
+  const handleAttack = async (isCorrect: boolean) => {
     if (isCorrect) {
-      toast.success("CRÍTICO! Monstro derrotado!");
+      toast.success("CRÍTICO! Inimigo derrotado!");
       addXp(50);
       
-      // Pequeno delay para dar tempo de ver a animação de acerto antes de limpar
+      // Loop infinito: chama o próximo monstro automaticamente
       setTimeout(() => {
-        setQuestion(null); 
+        fetchNewMonster(); 
       }, 1000);
       
     } else {
@@ -66,76 +66,115 @@ export default function Home() {
     }
   };
 
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-start p-4 md:p-12 gap-8 bg-slate-950 text-slate-100">
-      
-      {/* HUD Superior (Heads-Up Display) */}
-      <div className="w-full max-w-2xl flex justify-between items-center bg-slate-900/90 p-4 rounded-xl border border-slate-800 backdrop-blur sticky top-4 z-20 shadow-xl shadow-purple-900/10">
-        
-        {/* Vida */}
-        <div className="flex items-center gap-2 text-red-500 font-bold animate-pulse">
-          <Heart className="fill-red-500 h-6 w-6" />
-          <span className="text-xl">{hp}</span>
-        </div>
-        
-        {/* Barra de XP */}
-        <div className="flex flex-col items-center w-full max-w-[120px] md:max-w-[200px]">
-           <span className="text-[10px] md:text-xs text-slate-400 uppercase tracking-widest font-bold">Nível {level}</span>
-           <div className="w-full h-2 bg-slate-800 rounded-full mt-1 overflow-hidden border border-slate-700">
-              <div 
-                className="h-full bg-gradient-to-r from-purple-600 to-pink-500 transition-all duration-500 ease-out" 
-                style={{ width: `${(xp % 100)}%` }}
-              ></div>
-           </div>
-        </div>
+  const handleRestart = () => {
+    resetGame();
+    setIsGameOver(false);
+    setQuestion(null); 
+  };
 
-        {/* Pontuação */}
-        <div className="flex items-center gap-2 text-yellow-500 font-bold">
-          <span className="text-xl">{xp}</span>
-          <Trophy className="h-6 w-6 fill-yellow-500/20" />
+  if (isGameOver) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-slate-950 text-slate-100 animate-in fade-in duration-1000">
+        <div className="text-center space-y-6">
+          <Skull className="w-32 h-32 text-red-600 mx-auto animate-pulse" />
+          <h1 className="text-5xl font-bold text-red-500">FIM DE JOGO</h1>
+          <div className="space-y-2">
+            <p className="text-xl text-slate-400">Sua jornada terminou no <strong className="text-white">Nível {level}</strong>.</p>
+            <p className="text-lg text-yellow-500">XP Final: {xp}</p>
+          </div>
+          <Button 
+            onClick={handleRestart}
+            size="lg" 
+            className="bg-red-700 hover:bg-red-600 text-white font-bold text-xl px-12 py-8 rounded-xl shadow-lg mt-8"
+          >
+            RENASCER
+          </Button>
         </div>
-      </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-start p-4 md:p-8 gap-6 bg-slate-950 text-slate-100">
+      
+      {/* HUD Limpo */}
+      {(question || loading) && (
+        <div className="w-full max-w-4xl flex justify-between items-center bg-slate-900/80 p-4 rounded-xl border border-slate-800 backdrop-blur sticky top-4 z-50 shadow-2xl">
+          <div className="flex items-center gap-2 text-red-500 font-bold">
+            <div className="flex">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Heart 
+                  key={i} 
+                  className={`h-8 w-8 transition-all duration-300 ${i < hp ? "fill-red-600 text-red-600 scale-100" : "fill-slate-800 text-slate-700 scale-90"}`} 
+                />
+              ))}
+            </div>
+          </div>
+          
+          <div className="flex flex-col items-end">
+             <div className="flex items-center gap-2 text-yellow-400 font-bold mb-1">
+                <span className="text-2xl">{xp}</span>
+                <Trophy className="h-6 w-6" />
+             </div>
+             <div className="w-32 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-yellow-500 transition-all duration-500" 
+                  style={{ width: `${(xp % 1000) / 10}%` }} 
+                />
+             </div>
+             <span className="text-[10px] text-slate-500 uppercase font-bold mt-1">Nível {level}</span>
+          </div>
+        </div>
+      )}
 
       {/* Área Principal */}
-      <div className="w-full flex flex-col items-center justify-center flex-1 max-w-4xl relative z-10">
-        {!question ? (
-          <div className="text-center space-y-8 animate-in fade-in zoom-in duration-700 slide-in-from-bottom-10">
+      <div className="w-full flex flex-col items-center justify-center flex-1 max-w-5xl relative z-10 pb-10">
+        {!question && !loading ? (
+          
+          // LOBBY ORIGINAL (O que estava funcionando bem)
+          <div className="text-center space-y-8 animate-in fade-in zoom-in duration-700 mt-10">
             
-            {/* Logo Oficial */}
-            <div className="relative w-64 h-64 md:w-80 md:h-80 mx-auto group cursor-pointer">
-              <div className="absolute inset-0 bg-purple-600/20 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+            <div className="relative w-80 h-80 md:w-96 md:h-96 mx-auto group">
+              <div className="absolute inset-0 bg-purple-600/20 blur-[60px] rounded-full opacity-60 animate-pulse" />
               <Image 
                 src="/logo.png" 
                 alt="ENEM Dungeon Logo"
                 fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                className="object-contain drop-shadow-[0_0_25px_rgba(168,85,247,0.5)] transition-transform duration-500 group-hover:scale-105 group-hover:-rotate-1"
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-contain drop-shadow-2xl relative z-10"
                 priority
               />
             </div>
 
-            <div className="space-y-4">
-              <p className="text-slate-400 text-lg max-w-md mx-auto leading-relaxed">
-                A masmorra aguarda. Prove seu conhecimento e torne-se um <span className="text-purple-400 font-bold">Guardião do Saber</span>.
+            <div className="space-y-6">
+              <p className="text-slate-400 text-lg max-w-md mx-auto">
+                Enfrente os monstros do conhecimento. Sua sabedoria é sua única arma.
               </p>
               
               <Button 
                 size="lg" 
-                className="bg-purple-600 hover:bg-purple-500 text-white font-bold text-lg px-10 py-7 h-auto rounded-xl shadow-[0_0_30px_rgba(147,51,234,0.4)] border border-purple-400/30 transition-all hover:scale-105 active:scale-95"
+                className="bg-purple-700 hover:bg-purple-600 text-white font-bold text-xl px-12 py-8 h-auto rounded-xl shadow-[0_0_30px_rgba(147,51,234,0.3)] border border-purple-500/30 transition-all hover:scale-105 active:scale-95"
                 onClick={fetchNewMonster} 
-                disabled={loading}
               >
-                {loading ? (
-                  <Loader2 className="mr-3 h-6 w-6 animate-spin" />
-                ) : (
-                  <Zap className="mr-3 h-6 w-6 fill-white" />
-                )}
-                {loading ? "Invocando..." : "ENTRAR NA MASMORRA"}
+                <Zap className="mr-3 h-6 w-6 fill-white" />
+                ENTRAR NA MASMORRA
               </Button>
             </div>
           </div>
+
         ) : (
-          <BattleCard monster={question} onAttack={handleAttack} />
+          
+          // Batalha
+          <div className="w-full flex justify-center min-h-[400px]">
+            {loading ? (
+              <div className="flex flex-col items-center gap-4 mt-20 animate-pulse">
+                <Loader2 className="h-16 w-16 text-purple-500 animate-spin" />
+                <p className="text-slate-400 text-xl font-bold">Invocando criatura...</p>
+              </div>
+            ) : (
+              <BattleCard monster={question!} onAttack={handleAttack} />
+            )}
+          </div>
         )}
       </div>
     </main>
