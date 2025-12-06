@@ -106,3 +106,51 @@
   color: #1c1917; /* Texto Escuro (Importante para leitura) */
   box-shadow: inset 0 0 40px rgba(168, 139, 100, 0.3); /* Bordas envelhecidas */
 }
+
+/* --- 🏰 MATERIAIS DA DUNGEON (Adicione ao final do globals.css) --- */
+
+/* 1. Textura de Pedra (Fundo do Card) */
+.bg-dungeon-stone {
+  background-color: #1c1917; /* Stone 900 */
+  /* Textura de parede de pedra sutil */
+  background-image: url("https://www.transparenttextures.com/patterns/rocky-wall.png");
+  /* Sombra interna para dar profundidade */
+  box-shadow: inset 0 0 50px rgba(0,0,0,0.9);
+  border: 1px solid #292524;
+}
+
+/* 2. Textura de Pergaminho (Área de Leitura) */
+.bg-parchment {
+  background-color: #e7e5e4; /* Stone 200 (Claro para leitura) */
+  /* Textura de papel envelhecido */
+  background-image: url("https://www.transparenttextures.com/patterns/aged-paper.png");
+  color: #1c1917; /* Texto escuro */
+  border-radius: 4px;
+  /* Sombras internas nas bordas (efeito queimado) */
+  box-shadow: 
+    inset 0 0 30px rgba(120, 53, 15, 0.15),
+    0 4px 6px rgba(0,0,0,0.3);
+}
+
+/* 3. Botão de Pedra (Alternativas) */
+.btn-stone {
+  background: linear-gradient(180deg, #292524 0%, #1c1917 100%);
+  border-top: 1px solid #57534e;
+  border-bottom: 4px solid #0c0a09;
+  color: #d6d3d1;
+  text-shadow: 0 2px 0 black;
+  transition: all 0.1s;
+}
+.btn-stone:hover {
+  filter: brightness(1.2);
+  border-color: #a8a29e;
+}
+.btn-stone:active {
+  transform: translateY(3px); /* Efeito de afundar */
+  border-bottom-width: 1px;
+}
+
+/* 4. Brilho Mágico (Detalhes) */
+.glow-magic {
+  filter: drop-shadow(0 0 5px rgba(168, 85, 247, 0.6));
+}

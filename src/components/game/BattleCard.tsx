@@ -3,11 +3,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Monster } from "@/types/game";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Swords, Skull, Flame, Scroll } from "lucide-react";
+import { Swords, Skull, Flame, Scroll, Image as ImageIcon } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -19,12 +16,6 @@ interface BattleCardProps {
 export function BattleCard({ monster, onAttack }: BattleCardProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isShaking, setIsShaking] = useState(false);
-
-  const difficultyColor = {
-    mob: "bg-slate-600 border-slate-500",
-    elite: "bg-blue-900 border-blue-700",
-    boss: "bg-red-900 border-red-700",
-  };
 
   const handleOptionClick = (optionId: string, isCorrect: boolean) => {
     if (selectedOption !== null) return;
@@ -38,123 +29,149 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
     setTimeout(() => {
       onAttack(isCorrect);
       setSelectedOption(null);
-    }, 1000);
+    }, 1200);
   };
 
   return (
     <motion.div
       animate={isShaking ? { x: [-15, 15, -15, 15, 0] } : {}}
       transition={{ duration: 0.4 }}
-      className="w-full max-w-4xl px-4"
+      className="w-full max-w-4xl mx-auto px-4 mt-8"
     >
-      {/* MOLDURA DE PEDRA (Container Principal) 
-         Usa a classe .bg-stone-slab que criamos
-      */}
-      <Card className="border-4 border-stone-800 bg-stone-slab text-stone-200 shadow-2xl relative overflow-hidden rounded-sm">
+      {/* 1. MOLDURA DE PEDRA (O Container) */}
+      <div className="relative bg-dungeon-stone rounded-sm p-1 shadow-2xl border-t-[1px] border-white/10">
         
-        {/* Adorno: Efeito de Luz no Topo */}
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-700/50 to-transparent" />
+        {/* Adorno: Parafusos nos cantos */}
+        <div className="absolute top-3 left-3 w-3 h-3 rounded-full bg-black/60 border border-white/10 shadow-inner z-10" />
+        <div className="absolute top-3 right-3 w-3 h-3 rounded-full bg-black/60 border border-white/10 shadow-inner z-10" />
 
-        {/* CABEÇALHO ESCURO */}
-        <CardHeader className="border-b-4 border-stone-900 pb-4 bg-black/40">
-          <div className="flex justify-between items-center">
-            <div className="flex gap-3 items-center">
-              <Badge className={`text-white px-3 py-1 border-2 font-bold tracking-widest ${difficultyColor[monster.difficulty]}`}>
-                {monster.difficulty.toUpperCase()}
-              </Badge>
-              
-              {/* Título com Fonte Épica */}
-              <CardTitle className="text-xl md:text-2xl text-amber-500 flex items-center gap-2 font-[family-name:var(--font-cinzel)] drop-shadow-md">
-                {monster.difficulty === 'boss' ? <Skull className="h-6 w-6" /> : <Swords className="h-6 w-6" />}
-                {monster.name}
-              </CardTitle>
+        {/* 2. CABEÇALHO ESCURO */}
+        <div className="bg-black/40 border-b-4 border-black p-6 flex flex-col md:flex-row justify-between items-center gap-4 rounded-t-sm">
+          
+          <div className="flex items-center gap-4">
+            {/* Ícone de Classe */}
+            <div className={`
+              w-14 h-14 flex items-center justify-center border-2 rotate-45 shadow-lg
+              ${monster.difficulty === 'boss' ? 'bg-red-950 border-red-800' : 'bg-stone-800 border-stone-600'}
+            `}>
+              <div className="-rotate-45 glow-magic">
+                 {monster.difficulty === 'boss' ? <Skull className="h-7 w-7 text-red-500" /> : <Swords className="h-7 w-7 text-stone-400" />}
+              </div>
             </div>
-            
-            {/* Barra de Vida */}
-            <div className="w-1/3 flex flex-col items-end gap-1">
-              <span className="text-[10px] text-stone-400 uppercase font-bold tracking-widest">Vigor</span>
-              <Progress value={(monster.hp / monster.maxHp) * 100} className="h-2 bg-stone-950 border border-stone-700" />
+
+            <div className="flex flex-col">
+              <span className="text-stone-500 font-bold text-[10px] uppercase tracking-[0.2em] flex items-center gap-2">
+                <Flame className="w-3 h-3 text-orange-600 fill-orange-600" />
+                {monster.category}
+              </span>
+              <h2 className="text-2xl text-amber-500 font-[family-name:var(--font-cinzel)] font-bold drop-shadow-md">
+                {monster.name}
+              </h2>
             </div>
           </div>
-        </CardHeader>
 
-        <CardContent className="pt-8 space-y-8">
+          {/* Barra de Vida Inimiga */}
+          <div className="w-full md:w-40 flex flex-col gap-1">
+            <div className="flex justify-between text-[10px] text-red-800 font-bold uppercase">
+              <span>HP Inimigo</span>
+              <span>{monster.hp}/{monster.maxHp}</span>
+            </div>
+            <div className="h-2 bg-black border border-stone-800 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-red-700 shadow-[0_0_10px_rgba(220,38,38,0.5)]"
+                style={{ width: `${(monster.hp / monster.maxHp) * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 3. PERGAMINHO (Área da Questão) */}
+        <div className="p-4 md:p-8 bg-[#151413]">
           
-          {/* PERGAMINHO (Área do Texto)
-             Usa .bg-parchment para dar o fundo de papel claro
-          */}
-          <div className="bg-parchment p-6 md:p-8 rounded shadow-inner border-2 border-[#d4c5a5] relative">
+          {/* O Papel em si */}
+          <div className="bg-parchment p-6 md:p-10 relative shadow-lg transform md:-rotate-[0.5deg]">
             
-            {/* Ícone decorativo de pergaminho */}
-            <div className="absolute -top-3 -left-2 text-[#8b4513] opacity-80 bg-parchment rounded-full p-1 border border-[#8b4513]/30">
-               <Scroll className="w-5 h-5" />
+            {/* "Selo" de cera segurando o papel */}
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-red-900 border-4 border-red-950 shadow-lg z-10 flex items-center justify-center">
+              <div className="w-4 h-4 bg-red-800 rounded-full opacity-50" />
             </div>
 
-            {/* Texto em Markdown (Escuro para contraste) */}
+            {/* Texto da Questão (Escuro para leitura) */}
             <div className="
               prose prose-stone max-w-none 
-              prose-p:text-[#292524] prose-p:font-[family-name:var(--font-medieval)] prose-p:text-lg prose-p:leading-relaxed
+              prose-p:text-[#292524] prose-p:font-[family-name:var(--font-medieval)] prose-p:text-xl prose-p:leading-loose
               prose-headings:text-[#451a03] prose-headings:font-[family-name:var(--font-cinzel)]
-              prose-strong:text-[#451a03]
-              prose-img:rounded-md prose-img:border-4 prose-img:border-[#8b4513]/20
+              prose-strong:text-[#78350f]
+              prose-img:border-4 prose-img:border-[#78350f]/20 prose-img:rounded prose-img:shadow-md
             ">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {monster.fullText}
               </ReactMarkdown>
             </div>
 
-            {/* Imagem Externa (Se existir) */}
+            {/* Imagem da Questão (Se houver) */}
             {monster.imageUrl && (
-              <div className="mt-6 border-4 border-[#8b4513]/20 p-2 bg-white/50 rounded shadow-sm">
+              <div className="mt-8 border-4 border-[#78350f]/20 p-2 bg-white/40 rounded shadow-inner rotate-1">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
                   src={monster.imageUrl} 
                   alt="Enigma Visual" 
-                  className="object-contain w-full h-full max-h-80 mix-blend-multiply"
+                  className="w-full h-auto object-contain max-h-[400px] mix-blend-multiply"
                 />
               </div>
             )}
           </div>
 
-          {/* Alternativas (Ainda simples, vamos melhorar na Fase 3) */}
+        </div>
+
+        {/* 4. RODAPÉ (Botões de Pedra) */}
+        <div className="bg-[#0c0a09] p-6 border-t border-white/5">
           <div className="grid gap-3">
             {monster.options.map((opt) => {
-              let btnClass = "border-stone-600 bg-stone-800/80 hover:bg-stone-700 text-stone-200";
-              
+              // Estilo Base do Botão
+              let btnStyle = "btn-stone";
+              let badgeStyle = "bg-[#1c1917] border border-stone-600 text-stone-500";
+
+              // Estilo quando selecionado
               if (selectedOption === opt.id) {
                 if (opt.isCorrect) {
-                  btnClass = "bg-green-800 border-green-500 text-white";
+                  // ACERTO: Verde/Dourado
+                  btnStyle = "bg-green-900 border-green-600 text-green-100 transform translate-y-[3px] border-b-[1px] shadow-[0_0_20px_rgba(34,197,94,0.3)]";
+                  badgeStyle = "bg-green-950 border-green-500 text-green-400";
                 } else {
-                  btnClass = "bg-red-800 border-red-500 text-white";
+                  // ERRO: Vermelho
+                  btnStyle = "bg-red-950 border-red-800 text-red-200 transform translate-y-[3px] border-b-[1px] shadow-[0_0_20px_rgba(220,38,38,0.3)]";
+                  badgeStyle = "bg-red-900 border-red-500 text-red-200";
                 }
               }
 
               return (
-                <Button
+                <button
                   key={opt.id}
-                  variant="ghost"
-                  className={`justify-start text-left h-auto py-4 px-6 border-2 ${btnClass}`}
-                  onClick={() => handleOptionClick(opt.id, opt.isCorrect)}
                   disabled={selectedOption !== null}
+                  onClick={() => handleOptionClick(opt.id, opt.isCorrect)}
+                  className={`
+                    w-full relative flex items-center p-3 md:p-4 rounded font-[family-name:var(--font-medieval)] text-lg text-left group
+                    ${btnStyle}
+                  `}
                 >
-                  <span className="font-bold mr-4 border border-white/20 rounded w-8 h-8 flex items-center justify-center shrink-0 font-[family-name:var(--font-cinzel)]">
+                  {/* Letra (Runa) */}
+                  <div className={`
+                    w-10 h-10 flex items-center justify-center rounded font-bold text-xl font-[family-name:var(--font-cinzel)] mr-4 shrink-0 shadow-inner transition-colors
+                    ${badgeStyle}
+                  `}>
                     {opt.id}
-                  </span>
-                  <span className="whitespace-normal leading-snug font-[family-name:var(--font-medieval)] text-lg">
-                    {opt.text}
-                  </span>
-                </Button>
+                  </div>
+                  
+                  {/* Texto */}
+                  <span className="leading-snug">{opt.text}</span>
+                </button>
               );
             })}
           </div>
-        </CardContent>
-        
-        <CardFooter className="justify-center pt-4 pb-6 bg-black/20 border-t border-stone-800">
-          <p className="text-xs text-stone-500 font-[family-name:var(--font-cinzel)] tracking-widest uppercase">
-            A sabedoria é sua espada
-          </p>
-        </CardFooter>
-      </Card>
+        </div>
+
+      </div>
     </motion.div>
   );
 }
