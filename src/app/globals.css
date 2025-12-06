@@ -1,63 +1,34 @@
 @import "tailwindcss";
 
-/* CONFIGURAÇÃO DO TAILWIND 4 
-  Aqui nós "ensinamos" ao Tailwind as cores do Shadcn e as Fontes do Next.js
-*/
 @theme {
-  /* Mapeando as cores HSL do Shadcn para classes do Tailwind */
+  /* Cores do Shadcn (Mantidas) */
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
-
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
-
   --color-secondary: hsl(var(--secondary));
   --color-secondary-foreground: hsl(var(--secondary-foreground));
-
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
-
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
-
   --color-accent: hsl(var(--accent));
   --color-accent-foreground: hsl(var(--accent-foreground));
-
   --color-popover: hsl(var(--popover));
   --color-popover-foreground: hsl(var(--popover-foreground));
-
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
-
-  /* Mapeando o Radius */
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
-
-  /* Mapeando as Fontes RPG (definidas no layout.tsx) */
   --font-cinzel: var(--font-cinzel);
   --font-medieval: var(--font-medieval);
-  
-  /* Animações Customizadas */
-  --animate-accordion-down: accordion-down 0.2s ease-out;
-  --animate-accordion-up: accordion-up 0.2s ease-out;
-
-  @keyframes accordion-down {
-    from { height: 0 }
-    to { height: var(--radix-accordion-content-height) }
-  }
-  @keyframes accordion-up {
-    from { height: var(--radix-accordion-content-height) }
-    to { height: 0 }
-  }
 }
 
-/* VARIÁVEIS CSS (SHADCN DARK MODE PADRÃO)
-  Aqui definimos os valores brutos HSL
-*/
+/* SHADCN VARIABLES (Mantidas) */
 :root {
   --background: 0 0% 100%;
   --foreground: 240 10% 3.9%;
@@ -103,15 +74,35 @@
   --ring: 240 4.9% 83.9%;
 }
 
-/* ESTILOS BASE
-  Usamos CSS nativo aqui para garantir que funcione mesmo se o @apply falhar no build
-*/
 @layer base {
-  * {
-    border-color: hsl(var(--border));
-  }
-  body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-  }
+  * { border-color: hsl(var(--border)); }
+  body { background-color: hsl(var(--background)); color: hsl(var(--foreground)); }
+}
+
+/* --- TEXTURAS RPG (NOVO!) --- */
+
+/* 1. Fundo da Dungeon (Paredes Escuras) */
+.bg-dungeon-wall {
+  background-color: #0c0a09; /* Stone 950 */
+  background-image: url("https://www.transparenttextures.com/patterns/dark-matter.png");
+  background-attachment: fixed; /* O fundo fica fixo ao rolar */
+}
+
+/* 2. Moldura de Pedra (O Container do Card) */
+.bg-stone-slab {
+  background-color: #1c1917;
+  background-image: url("https://www.transparenttextures.com/patterns/rocky-wall.png");
+  box-shadow: 
+    inset 0 0 50px rgba(0,0,0,0.8), /* Sombra interna profunda */
+    0 20px 25px -5px rgba(0, 0, 0, 0.5), /* Sombra externa de elevação */
+    0 8px 10px -6px rgba(0, 0, 0, 0.5);
+  border: 1px solid #44403c;
+}
+
+/* 3. Pergaminho Antigo (Área de Leitura) - Fundo Claro e Papel */
+.bg-parchment {
+  background-color: #f5f5dc; /* Bege clássico */
+  background-image: url("https://www.transparenttextures.com/patterns/aged-paper.png");
+  color: #1c1917; /* Texto Escuro (Importante para leitura) */
+  box-shadow: inset 0 0 40px rgba(168, 139, 100, 0.3); /* Bordas envelhecidas */
 }
