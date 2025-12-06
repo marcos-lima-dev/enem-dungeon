@@ -154,3 +154,39 @@
 .glow-magic {
   filter: drop-shadow(0 0 5px rgba(168, 85, 247, 0.6));
 }
+
+/* --- ENCANTAMENTOS DE BATALHA --- */
+
+/* Acerto: Pedra de Jade/Esmeralda Brilhante */
+.btn-stone-correct {
+  background: linear-gradient(180deg, #064e3b 0%, #022c22 100%); /* Verde Profundo */
+  border-top: 1px solid #4ade80;
+  border-bottom: 4px solid #064e3b;
+  border-color: #22c55e;
+  color: #dcfce7;
+  box-shadow: 
+    0 0 20px rgba(34, 197, 94, 0.4), /* Glow Externo */
+    inset 0 0 10px rgba(34, 197, 94, 0.2); /* Glow Interno */
+  transform: translateY(2px);
+}
+
+/* Erro: Pedra de Sangue/Rubi */
+.btn-stone-wrong {
+  background: linear-gradient(180deg, #7f1d1d 0%, #450a0a 100%); /* Vermelho Profundo */
+  border-top: 1px solid #f87171;
+  border-bottom: 4px solid #450a0a;
+  border-color: #ef4444;
+  color: #fee2e2;
+  box-shadow: 
+    0 0 20px rgba(239, 68, 68, 0.4),
+    inset 0 0 10px rgba(239, 68, 68, 0.2);
+  transform: translateY(2px);
+}
+
+/* Runa Lateral (A caixa da letra A, B, C...) */
+.rune-box {
+  background-color: #0c0a09;
+  border: 1px solid #44403c;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+  font-family: var(--font-cinzel);
+}
