@@ -17,8 +17,13 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isShaking, setIsShaking] = useState(false);
 
+  // Runas decorativas para o topo da pedra
+  const RUNES = "ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚹ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛊ ᛏ ᛒ ᛖ ᛗ";
+
   const handleOptionClick = (optionId: string, isCorrect: boolean) => {
+    // Evita clique duplo
     if (selectedOption !== null) return;
+    
     setSelectedOption(optionId);
     
     if (!isCorrect) {
@@ -26,6 +31,7 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
       setTimeout(() => setIsShaking(false), 500);
     }
 
+    // Delay para o jogador ver o resultado (pedra verde/vermelha)
     setTimeout(() => {
       onAttack(isCorrect);
       setSelectedOption(null);
@@ -36,100 +42,129 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
     <motion.div
       animate={isShaking ? { x: [-15, 15, -15, 15, 0] } : {}}
       transition={{ duration: 0.4 }}
-      className="w-full max-w-4xl mx-auto px-4 mt-8"
+      className="w-full max-w-4xl mx-auto px-4 mt-8 perspective-1000"
     >
-      {/* 1. MOLDURA DE PEDRA */}
-      <div className="relative bg-dungeon-stone rounded-sm p-1 shadow-2xl border-t-[1px] border-white/10">
+      {/* 1. MOLDURA DE PEDRA (O Monólito) */}
+      <div className="relative bg-dungeon-stone rounded-xl border-x-[6px] border-t-[6px] border-b-[12px] border-[#292524] shadow-[0_0_100px_rgba(88,28,135,0.4)] overflow-hidden">
         
-        {/* Adornos (Parafusos) */}
-        <div className="absolute top-3 left-3 w-3 h-3 rounded-full bg-black/60 border border-white/10 shadow-inner z-10" />
-        <div className="absolute top-3 right-3 w-3 h-3 rounded-full bg-black/60 border border-white/10 shadow-inner z-10" />
+        {/* Adornos: Parafusos nos cantos superiores */}
+        <div className="absolute top-4 left-4 w-3 h-3 rounded-full bg-black/60 border border-white/10 shadow-inner z-20" />
+        <div className="absolute top-4 right-4 w-3 h-3 rounded-full bg-black/60 border border-white/10 shadow-inner z-20" />
 
-        {/* 2. CABEÇALHO */}
-        <div className="bg-black/40 border-b-4 border-black p-6 flex flex-col md:flex-row justify-between items-center gap-4 rounded-t-sm">
-          <div className="flex items-center gap-4">
+        {/* 2. CABEÇALHO (Runas + Título) */}
+        <div className="relative bg-black/40 border-b-4 border-[#1c1917] p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          
+          {/* Faixa de Runas Brilhantes */}
+          <div className="absolute top-1 left-0 w-full text-center text-[10px] text-rune-glow opacity-30 font-mono tracking-[1.5em] select-none pointer-events-none">
+            {RUNES}
+          </div>
+
+          <div className="flex items-center gap-4 z-10 w-full">
+            {/* Ícone de Dificuldade (Losango de Pedra) */}
             <div className={`
-              w-14 h-14 flex items-center justify-center border-2 rotate-45 shadow-lg
+              w-16 h-16 flex-shrink-0 flex items-center justify-center border-4 rotate-45 shadow-2xl 
               ${monster.difficulty === 'boss' ? 'bg-red-950 border-red-800' : 'bg-stone-800 border-stone-600'}
             `}>
-              <div className="-rotate-45">
-                 {monster.difficulty === 'boss' ? <Skull className="h-7 w-7 text-red-500" /> : <Swords className="h-7 w-7 text-stone-400" />}
+              <div className="-rotate-45 filter drop-shadow-lg">
+                 {monster.difficulty === 'boss' ? <Skull className="h-8 w-8 text-red-500 animate-pulse" /> : <Swords className="h-8 w-8 text-slate-400" />}
               </div>
             </div>
 
             <div className="flex flex-col">
-              <span className="text-stone-500 font-bold text-[10px] uppercase tracking-[0.2em] flex items-center gap-2">
-                <Flame className="w-3 h-3 text-orange-600 fill-orange-600" />
+              <div className="flex items-center gap-2 text-amber-600 font-bold text-xs uppercase tracking-[0.2em] font-[family-name:var(--font-cinzel)]">
+                <Flame className="w-3 h-3 fill-current" />
                 {monster.category}
-              </span>
-              <h2 className="text-2xl text-amber-500 font-[family-name:var(--font-cinzel)] font-bold drop-shadow-md">
+                <span className="text-stone-600">|</span>
+                <span className={monster.difficulty === 'boss' ? "text-red-500" : "text-stone-400"}>
+                  {monster.difficulty.toUpperCase()}
+                </span>
+              </div>
+              <h1 className="text-2xl md:text-3xl text-stone-100 font-[family-name:var(--font-cinzel)] font-black text-shadow-lg leading-none mt-1">
                 {monster.name}
-              </h2>
+              </h1>
             </div>
           </div>
 
-          {/* Barra de Vida */}
-          <div className="w-full md:w-40 flex flex-col gap-1">
-            <div className="flex justify-between text-[10px] text-red-800 font-bold uppercase">
+          {/* Barra de Vida Inimiga */}
+          <div className="w-full md:w-48 z-10">
+            <div className="flex justify-between text-[10px] text-stone-400 font-bold uppercase mb-1">
               <span>HP Inimigo</span>
               <span>{monster.hp}/{monster.maxHp}</span>
             </div>
-            <div className="h-2 bg-black border border-stone-800 rounded-full overflow-hidden">
+            <div className="h-3 bg-black border border-stone-700 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-red-700 shadow-[0_0_10px_rgba(220,38,38,0.5)]"
+                className="h-full bg-gradient-to-r from-red-900 to-red-600 shadow-[0_0_10px_rgba(220,38,38,0.8)]"
                 style={{ width: `${(monster.hp / monster.maxHp) * 100}%` }}
               />
             </div>
           </div>
         </div>
 
-        {/* 3. PERGAMINHO (Conteúdo) */}
-        <div className="p-4 md:p-8 bg-[#151413]">
-          <div className="bg-parchment p-6 md:p-10 relative shadow-lg transform md:-rotate-[0.5deg]">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-red-900 border-4 border-red-950 shadow-lg z-10 flex items-center justify-center">
-              <div className="w-4 h-4 bg-red-800 rounded-full opacity-50" />
+        {/* 3. CORPO (O Pergaminho) */}
+        <div className="p-6 md:p-8 bg-[#151412] relative">
+          
+          {/* Área do Papel */}
+          <div className="bg-parchment p-6 md:p-10 rounded-sm shadow-xl relative transform md:-rotate-[0.5deg] transition-transform hover:rotate-0 duration-500">
+            
+            {/* "Selo" Vermelho no topo */}
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-red-900 border-2 border-red-700 shadow-lg z-20 flex items-center justify-center">
+              <div className="w-4 h-4 bg-red-950 rounded-full opacity-50" />
             </div>
 
+            {/* Ícone decorativo de pergaminho */}
+            <div className="absolute top-4 right-4 text-[#8b4513] opacity-20">
+               <Scroll className="w-12 h-12" />
+            </div>
+
+            {/* Texto da Questão (Markdown) */}
             <div className="
               prose prose-stone max-w-none 
               prose-p:text-[#292524] prose-p:font-[family-name:var(--font-medieval)] prose-p:text-xl prose-p:leading-loose
               prose-headings:text-[#451a03] prose-headings:font-[family-name:var(--font-cinzel)]
-              prose-strong:text-[#451a03]
-              prose-img:rounded-md prose-img:border-4 prose-img:border-[#8b4513]/20
+              prose-strong:text-[#7c2d12]
+              prose-img:border-4 prose-img:border-[#57534e] prose-img:rounded-sm prose-img:shadow-md
+              prose-table:border prose-table:border-[#57534e] prose-th:bg-[#d6d3d1] prose-th:p-2 prose-td:p-2
             ">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {monster.fullText}
               </ReactMarkdown>
             </div>
 
+            {/* Imagem da Questão (Se houver) */}
             {monster.imageUrl && (
-              <div className="mt-8 border-4 border-[#8b4513]/20 p-2 bg-white/40 rounded shadow-sm rotate-1">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img 
-                  src={monster.imageUrl} 
-                  alt="Enigma Visual" 
-                  className="w-full h-auto object-contain max-h-[400px] mix-blend-multiply"
-                />
+              <div className="mt-8 border-4 border-[#57534e]/50 p-2 bg-white/40 rounded shadow-inner rotate-1 group">
+                <div className="relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img 
+                    src={monster.imageUrl} 
+                    alt="Imagem da questão"
+                    className="w-full h-auto object-contain max-h-[400px] mix-blend-multiply transition-transform duration-500 group-hover:scale-[1.02]"
+                  />
+                  <div className="absolute bottom-2 right-2 bg-black/60 p-1.5 rounded text-white">
+                    <ImageIcon className="w-4 h-4" />
+                  </div>
+                </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* 4. RODAPÉ DE AÇÃO (As Placas Rúnicas) */}
-        <div className="bg-[#0c0a09] p-6 border-t border-white/5">
+        {/* 4. RODAPÉ (Botões de Pedra Rúnica) */}
+        <div className="bg-[#0c0a09] p-6 border-t-4 border-[#292524]">
           <div className="grid gap-3">
             {monster.options.map((opt) => {
-              // Lógica de Estilo Dinâmico
-              let btnClass = "btn-stone"; // Estilo Padrão (Globals.css)
-              let runeClass = "text-stone-500 border-stone-700";
+              // Definição dinâmica das classes baseada no estado
+              let btnClass = "btn-stone"; // Padrão (Pedra Cinza)
+              let runeClass = "text-stone-500 border-stone-700 bg-[#151412]";
 
-              // Se o usuário selecionou algo
               if (selectedOption === opt.id) {
                 if (opt.isCorrect) {
-                  btnClass = "btn-stone-correct"; // Classe de Vitória (Verde Brilhante)
+                  // ACERTO: Pedra Encantada (Verde)
+                  btnClass = "btn-stone-correct";
                   runeClass = "text-green-200 border-green-500 bg-green-900";
                 } else {
-                  btnClass = "btn-stone-wrong"; // Classe de Derrota (Vermelho Sangue)
+                  // ERRO: Pedra Amaldiçoada (Vermelha)
+                  btnClass = "btn-stone-wrong";
                   runeClass = "text-red-200 border-red-500 bg-red-900";
                 }
               }
@@ -140,13 +175,13 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
                   disabled={selectedOption !== null}
                   onClick={() => handleOptionClick(opt.id, opt.isCorrect)}
                   className={`
-                    w-full relative flex items-center p-3 md:p-4 rounded-sm text-left group transition-all duration-200
+                    w-full relative flex items-stretch text-left rounded-sm group transition-all duration-200
                     ${btnClass}
                   `}
                 >
                   {/* A Runa Lateral (Letra) */}
                   <div className={`
-                    w-12 h-12 flex items-center justify-center rounded-sm border-2 font-bold text-2xl mr-5 shrink-0 rune-box
+                    w-14 flex items-center justify-center border-r-2 font-bold text-2xl rune-box
                     transition-colors duration-300
                     ${runeClass}
                   `}>
@@ -154,13 +189,15 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
                   </div>
                   
                   {/* O Texto */}
-                  <span className="leading-snug font-[family-name:var(--font-medieval)] text-lg text-stone-200 group-hover:text-white transition-colors">
-                    {opt.text}
-                  </span>
+                  <div className="p-4 flex-1 flex items-center">
+                    <span className="leading-snug font-[family-name:var(--font-medieval)] text-lg text-stone-300 group-hover:text-white transition-colors">
+                      {opt.text}
+                    </span>
+                  </div>
 
-                  {/* Brilho hover (só se não estiver respondido) */}
+                  {/* Brilho hover (só se não tiver clicado) */}
                   {!selectedOption && (
-                    <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none mix-blend-overlay" />
+                    <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none mix-blend-overlay rounded-sm" />
                   )}
                 </button>
               );

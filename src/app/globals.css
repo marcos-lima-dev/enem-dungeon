@@ -1,34 +1,57 @@
 @import "tailwindcss";
 
+/* --- 1. CONFIGURAÇÃO DO TAILWIND 4 & SHADCN --- */
 @theme {
-  /* Cores do Shadcn (Mantidas) */
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
+
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
+
   --color-secondary: hsl(var(--secondary));
   --color-secondary-foreground: hsl(var(--secondary-foreground));
+
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
+
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
+
   --color-accent: hsl(var(--accent));
   --color-accent-foreground: hsl(var(--accent-foreground));
+
   --color-popover: hsl(var(--popover));
   --color-popover-foreground: hsl(var(--popover-foreground));
+
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
+
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+
+  /* Fontes Personalizadas (Layout.tsx) */
   --font-cinzel: var(--font-cinzel);
   --font-medieval: var(--font-medieval);
+  
+  /* Animações do Shadcn */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  @keyframes accordion-down {
+    from { height: 0 }
+    to { height: var(--radix-accordion-content-height) }
+  }
+  @keyframes accordion-up {
+    from { height: var(--radix-accordion-content-height) }
+    to { height: 0 }
+  }
 }
 
-/* SHADCN VARIABLES (Mantidas) */
+/* --- 2. VARIÁVEIS DE COR (DARK MODE PADRÃO) --- */
 :root {
   --background: 0 0% 100%;
   --foreground: 240 10% 3.9%;
@@ -79,60 +102,41 @@
   body { background-color: hsl(var(--background)); color: hsl(var(--foreground)); }
 }
 
-/* --- TEXTURAS RPG (NOVO!) --- */
+/* --- 3. MATERIAIS DA DUNGEON & RPG (Customizações) --- */
 
-/* 1. Fundo da Dungeon (Paredes Escuras) */
+/* Fundo da Dungeon (Paredes Escuras) */
 .bg-dungeon-wall {
-  background-color: #0c0a09; /* Stone 950 */
+  background-color: #0c0a09;
   background-image: url("https://www.transparenttextures.com/patterns/dark-matter.png");
-  background-attachment: fixed; /* O fundo fica fixo ao rolar */
+  background-attachment: fixed;
 }
 
-/* 2. Moldura de Pedra (O Container do Card) */
-.bg-stone-slab {
+/* Textura de Pedra (Fundo do Card) */
+.bg-dungeon-stone {
   background-color: #1c1917;
   background-image: url("https://www.transparenttextures.com/patterns/rocky-wall.png");
-  box-shadow: 
-    inset 0 0 50px rgba(0,0,0,0.8), /* Sombra interna profunda */
-    0 20px 25px -5px rgba(0, 0, 0, 0.5), /* Sombra externa de elevação */
-    0 8px 10px -6px rgba(0, 0, 0, 0.5);
-  border: 1px solid #44403c;
-}
-
-/* 3. Pergaminho Antigo (Área de Leitura) - Fundo Claro e Papel */
-.bg-parchment {
-  background-color: #f5f5dc; /* Bege clássico */
-  background-image: url("https://www.transparenttextures.com/patterns/aged-paper.png");
-  color: #1c1917; /* Texto Escuro (Importante para leitura) */
-  box-shadow: inset 0 0 40px rgba(168, 139, 100, 0.3); /* Bordas envelhecidas */
-}
-
-/* --- 🏰 MATERIAIS DA DUNGEON (Adicione ao final do globals.css) --- */
-
-/* 1. Textura de Pedra (Fundo do Card) */
-.bg-dungeon-stone {
-  background-color: #1c1917; /* Stone 900 */
-  /* Textura de parede de pedra sutil */
-  background-image: url("https://www.transparenttextures.com/patterns/rocky-wall.png");
-  /* Sombra interna para dar profundidade */
   box-shadow: inset 0 0 50px rgba(0,0,0,0.9);
   border: 1px solid #292524;
 }
 
-/* 2. Textura de Pergaminho (Área de Leitura) */
+/* Textura de Pergaminho (Área de Leitura) */
 .bg-parchment {
-  background-color: #e7e5e4; /* Stone 200 (Claro para leitura) */
-  /* Textura de papel envelhecido */
+  background-color: #f5f5dc; /* Bege clássico */
   background-image: url("https://www.transparenttextures.com/patterns/aged-paper.png");
-  color: #1c1917; /* Texto escuro */
+  color: #1c1917; /* Texto escuro para leitura */
   border-radius: 4px;
-  /* Sombras internas nas bordas (efeito queimado) */
   box-shadow: 
     inset 0 0 30px rgba(120, 53, 15, 0.15),
     0 4px 6px rgba(0,0,0,0.3);
 }
 
-/* 3. Botão de Pedra (Alternativas) */
+/* Brilho das Runas */
+.text-rune-glow {
+  color: #c084fc;
+  text-shadow: 0 0 5px #a855f7, 0 0 10px #7e22ce;
+}
+
+/* Botão de Pedra (Neutro) */
 .btn-stone {
   background: linear-gradient(180deg, #292524 0%, #1c1917 100%);
   border-top: 1px solid #57534e;
@@ -146,47 +150,41 @@
   border-color: #a8a29e;
 }
 .btn-stone:active {
-  transform: translateY(3px); /* Efeito de afundar */
+  transform: translateY(3px);
   border-bottom-width: 1px;
 }
 
-/* 4. Brilho Mágico (Detalhes) */
-.glow-magic {
-  filter: drop-shadow(0 0 5px rgba(168, 85, 247, 0.6));
-}
-
-/* --- ENCANTAMENTOS DE BATALHA --- */
-
-/* Acerto: Pedra de Jade/Esmeralda Brilhante */
+/* Botão de Acerto (Verde) */
 .btn-stone-correct {
-  background: linear-gradient(180deg, #064e3b 0%, #022c22 100%); /* Verde Profundo */
+  background: linear-gradient(180deg, #064e3b 0%, #022c22 100%);
   border-top: 1px solid #4ade80;
   border-bottom: 4px solid #064e3b;
   border-color: #22c55e;
   color: #dcfce7;
-  box-shadow: 
-    0 0 20px rgba(34, 197, 94, 0.4), /* Glow Externo */
-    inset 0 0 10px rgba(34, 197, 94, 0.2); /* Glow Interno */
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
   transform: translateY(2px);
 }
 
-/* Erro: Pedra de Sangue/Rubi */
+/* Botão de Erro (Vermelho) */
 .btn-stone-wrong {
-  background: linear-gradient(180deg, #7f1d1d 0%, #450a0a 100%); /* Vermelho Profundo */
+  background: linear-gradient(180deg, #7f1d1d 0%, #450a0a 100%);
   border-top: 1px solid #f87171;
   border-bottom: 4px solid #450a0a;
   border-color: #ef4444;
   color: #fee2e2;
-  box-shadow: 
-    0 0 20px rgba(239, 68, 68, 0.4),
-    inset 0 0 10px rgba(239, 68, 68, 0.2);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
   transform: translateY(2px);
 }
 
-/* Runa Lateral (A caixa da letra A, B, C...) */
+/* Caixa da Runa (Letra A, B, C...) */
 .rune-box {
   background-color: #0c0a09;
   border: 1px solid #44403c;
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
   font-family: var(--font-cinzel);
+}
+
+/* Brilho Mágico */
+.glow-magic {
+  filter: drop-shadow(0 0 5px rgba(168, 85, 247, 0.6));
 }
