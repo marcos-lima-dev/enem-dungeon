@@ -28,3 +28,5 @@ export interface Monster {
     isCorrect: boolean;
   }[];
 }
+
+export type GameDifficulty = 'easy' | 'medium' | 'hard';

@@ -4,23 +4,28 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { createMonsterFromQuestion } from "@/lib/monster-factory";
 import { useGameStore } from "@/store/use-game-store";
-import { EnemQuestion, Monster } from "@/types/game";
+import { EnemQuestion, Monster, GameDifficulty } from "@/types/game";
 import { BattleCard } from "@/components/game/BattleCard";
-// Ícones novos para os portais
-import { Loader2, Heart, Trophy, Skull, Brain, FlaskConical, Hourglass, BookOpen, Sparkles, Swords } from "lucide-react";
-import { toast } from "sonner";
-import { useGameSound } from "@/hooks/use-game-sound";
 import { LevelUpModal } from "@/components/game/LevelUpModal";
+import { useGameSound } from "@/hooks/use-game-sound";
+import { toast } from "sonner";
+import { 
+  Loader2, Heart, Trophy, Skull, Brain, 
+  FlaskConical, Hourglass, BookOpen, Sparkles, Swords 
+} from "lucide-react";
 
 export default function Home() {
-  const { hp, xp, level, takeDamage, addXp, resetGame } = useGameStore();
+  // 1. Hooks da Store (Incluindo Difficulty e SetDifficulty)
+  const { hp, xp, level, takeDamage, addXp, resetGame, difficulty, setDifficulty } = useGameStore();
+  
   const [loading, setLoading] = useState(false);
   const [question, setQuestion] = useState<Monster | null>(null);
   const [isGameOver, setIsGameOver] = useState(false);
   
-  // Estado da Categoria
+  // Estado da Categoria (Qual masmorra o jogador escolheu?)
   const [selectedCategory, setSelectedCategory] = useState<string>('aleatorio');
 
+  // Estados Visuais (Level Up e Som)
   const [showLevelUp, setShowLevelUp] = useState(false);
   const prevLevelRef = useRef(level);
   const { playGameOver, playWin } = useGameSound();
@@ -75,8 +80,7 @@ export default function Home() {
       color: 'text-red-400',
       border: 'border-red-500/50',
       bgHover: 'group-hover:bg-red-900/20',
-      glow: 'group-hover:shadow-[0_0_30px_rgba(239,68,68,0.4)]',
-      fullWidth: true // Esse ocupa 2 colunas
+      glow: 'group-hover:shadow-[0_0_30px_rgba(239,68,68,0.4)]'
     },
   ];
 
@@ -87,6 +91,7 @@ export default function Home() {
     if (level > prevLevelRef.current) {
       setShowLevelUp(true);
       playWin();
+      // Se não tiver questão na tela (ex: estava carregando), busca uma nova
       if (!question) fetchNewMonster(selectedCategory);
     }
     prevLevelRef.current = level;
@@ -106,12 +111,19 @@ export default function Home() {
     if (hp <= 0) return;
     setLoading(true);
     try {
+      // Passa a categoria selecionada para a API
       const res = await fetch(`/api/monster?t=${Date.now()}&categoria=${categoria}`);
+      
       if (!res.ok) throw new Error("Falha na comunicação");
       const data = await res.json();
-      if (!data || !Array.isArray(data) || data.length === 0) throw new Error("Masmorra vazia");
+      
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        throw new Error("Masmorra vazia");
+      }
+
       const monster = createMonsterFromQuestion(data[0] as EnemQuestion);
       setQuestion(monster);
+
     } catch (error) {
       console.error(error);
       toast.error("Erro ao invocar monstro.");
@@ -120,6 +132,7 @@ export default function Home() {
     }
   }
 
+  // Inicia o jogo ao clicar em um portal
   const startGame = (categoria: string) => {
     setSelectedCategory(categoria);
     fetchNewMonster(categoria);
@@ -129,7 +142,11 @@ export default function Home() {
     if (isCorrect) {
       toast.success("CRÍTICO! Inimigo derrotado!");
       addXp(50);
-      setTimeout(() => { fetchNewMonster(selectedCategory); }, 1000);
+      
+      setTimeout(() => { 
+        fetchNewMonster(selectedCategory); 
+      }, 1000);
+      
     } else {
       toast.error("DANO SOFRIDO! -1 Coração");
       takeDamage(1);
@@ -166,11 +183,13 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-start p-4 md:p-8 gap-6 bg-slate-950 text-slate-100 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
       
+      {/* Modal de Level Up */}
       <LevelUpModal open={showLevelUp} newLevel={level} onClose={() => setShowLevelUp(false)} />
 
       {/* --- HUD --- */}
       {(question || loading) && (
         <div className="w-full max-w-5xl flex justify-between items-center bg-[#151412] p-3 border-y-4 border-amber-900/40 backdrop-blur sticky top-0 z-50 shadow-2xl">
+          {/* Vida */}
           <div className="flex items-center gap-2">
              <div className="flex bg-black/50 p-2 rounded border border-stone-800">
               {Array.from({ length: 3 }).map((_, i) => (
@@ -178,13 +197,15 @@ export default function Home() {
               ))}
              </div>
           </div>
+          {/* XP */}
           <div className="flex flex-col items-end w-full max-w-xs">
              <div className="flex items-center gap-3 text-amber-500 font-bold mb-1 font-[family-name:var(--font-cinzel)]">
                 <span className="text-xl drop-shadow-sm text-shadow">{xp} XP</span>
                 <Trophy className="h-5 w-5 text-amber-600" />
              </div>
              <div className="w-full h-2 bg-black border border-stone-600 relative rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-amber-800 to-amber-600 transition-all duration-500" style={{ width: `${(xp % 1000) / 10}%` }} />
+                {/* Aqui ajustamos a barra para mostrar progresso do nível atual */}
+                <div className="h-full bg-gradient-to-r from-amber-800 to-amber-600 transition-all duration-500" style={{ width: `${(xp % (level * 50)) * 2}%` }} />
              </div>
              <span className="text-[10px] text-stone-500 uppercase font-bold mt-1 tracking-widest font-mono">Nível {level}</span>
           </div>
@@ -196,13 +217,12 @@ export default function Home() {
         
         {!question && !loading ? (
           
-          // --- NOVO LOBBY: PORTAIS DA MASMORRA ---
-          <div className="text-center space-y-10 animate-in fade-in zoom-in duration-700 mt-6 w-full max-w-4xl px-4">
+          // --- NOVO LOBBY: ESCOLHA DE PORTAIS ---
+          <div className="text-center space-y-8 animate-in fade-in zoom-in duration-700 mt-6 w-full max-w-4xl px-4">
             
-            {/* Header do Lobby */}
+            {/* Header */}
             <div className="flex flex-col items-center gap-4">
-               {/* Logo Menor para dar espaço aos portais */}
-               <div className="relative w-48 h-48 group cursor-default transition-transform hover:scale-105 duration-500">
+               <div className="relative w-40 h-40 group cursor-default transition-transform hover:scale-105 duration-500">
                   <div className="absolute inset-0 bg-purple-600/20 blur-[40px] rounded-full opacity-50 group-hover:opacity-80 transition-opacity" />
                   <Image src="/logo.png" alt="Logo" fill className="object-contain drop-shadow-xl relative z-10" priority />
                </div>
@@ -211,16 +231,38 @@ export default function Home() {
                   <h2 className="text-4xl md:text-5xl font-[family-name:var(--font-cinzel)] text-stone-200 font-bold tracking-widest uppercase drop-shadow-md">
                     <span className="text-amber-600">🔥</span> Escolha seu Portal
                   </h2>
-                  <p className="text-stone-500 font-[family-name:var(--font-medieval)] text-lg mt-2">
-                    Cada dungeon esconde um tipo diferente de desafio...
-                  </p>
                </div>
             </div>
 
-            {/* GRID DE PORTAIS (Layout Pirâmide no Desktop) */}
-            <div className="flex flex-col gap-4 w-full mt-8 md:grid md:grid-cols-2">
+            {/* SELETOR DE DIFICULDADE */}
+            <div className="flex flex-wrap justify-center gap-4">
+              {[
+                { id: 'easy', label: 'Aprendiz', xp: 'Fácil', color: 'text-green-400', border: 'hover:border-green-500' },
+                { id: 'medium', label: 'Aventureiro', xp: 'Médio', color: 'text-blue-400', border: 'hover:border-blue-500' },
+                { id: 'hard', label: 'Guardião', xp: 'Difícil', color: 'text-red-500', border: 'hover:border-red-500' },
+              ].map((nivel) => (
+                <button
+                  key={nivel.id}
+                  onClick={() => setDifficulty(nivel.id as GameDifficulty)}
+                  className={`
+                    relative px-6 py-3 rounded-lg border-2 font-[family-name:var(--font-cinzel)] uppercase tracking-wider transition-all duration-300
+                    ${difficulty === nivel.id 
+                      ? `bg-stone-800 border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.3)] scale-105` 
+                      : `bg-stone-900/50 border-stone-700 text-stone-500 ${nivel.border} hover:bg-stone-800`
+                    }
+                  `}
+                >
+                  <div className="flex flex-col items-center">
+                    <span className={`text-sm font-bold ${difficulty === nivel.id ? nivel.color : ''}`}>{nivel.label}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* GRID DE PORTAIS (Pirâmide) */}
+            <div className="flex flex-col gap-4 w-full md:grid md:grid-cols-2">
               
-              {/* Renderiza os 4 primeiros */}
+              {/* 4 Primeiros Portais */}
               {PORTAIS.slice(0, 4).map((portal) => (
                 <button
                   key={portal.id}
@@ -231,11 +273,9 @@ export default function Home() {
                     ${portal.border} ${portal.glow}
                   `}
                 >
-                  {/* Fundo Hover Colorido */}
                   <div className={`absolute inset-0 opacity-0 transition-opacity duration-500 ${portal.bgHover}`} />
                   
                   <div className="relative z-10 flex items-start gap-5">
-                    {/* Ícone */}
                     <div className={`
                       p-4 rounded-full bg-black/40 border border-white/10 shadow-inner
                       transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3
@@ -259,7 +299,7 @@ export default function Home() {
                 </button>
               ))}
 
-              {/* O ÚLTIMO PORTAL (Centralizado manualmente para evitar erro de sintaxe) */}
+              {/* O Último Portal (Centralizado) */}
               <div className="md:col-span-2 flex justify-center">
                 {PORTAIS.slice(4).map((portal) => (
                     <button
@@ -301,7 +341,7 @@ export default function Home() {
             </div>
 
             <div className="text-xs text-stone-700 font-mono mt-12 uppercase tracking-widest opacity-40">
-              v1.1 • Crônicas do Vestibular
+              v1.2 • Crônicas do Vestibular
             </div>
           </div>
 
@@ -316,7 +356,7 @@ export default function Home() {
                   <Loader2 className="h-20 w-20 text-stone-400 animate-spin relative z-10" />
                 </div>
                 <p className="text-stone-500 font-[family-name:var(--font-cinzel)] text-2xl tracking-widest uppercase">
-                  Abrindo o Portal...
+                  Invocando criatura...
                 </p>
               </div>
             ) : (
