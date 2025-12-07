@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react"; // <--- Adicionei useRef
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { createMonsterFromQuestion } from "@/lib/monster-factory";
@@ -9,7 +9,8 @@ import { EnemQuestion, Monster } from "@/types/game";
 import { BattleCard } from "@/components/game/BattleCard";
 import { Loader2, Heart, Trophy, Zap, Skull } from "lucide-react";
 import { toast } from "sonner";
-import { useGameSound } from "@/hooks/use-game-sound"; // Import do Som
+import { useGameSound } from "@/hooks/use-game-sound";
+import { LevelUpModal } from "@/components/game/LevelUpModal"; // <--- Importe o Modal
 
 export default function Home() {
   const { hp, xp, level, takeDamage, addXp, resetGame } = useGameStore();
@@ -17,15 +18,36 @@ export default function Home() {
   const [question, setQuestion] = useState<Monster | null>(null);
   const [isGameOver, setIsGameOver] = useState(false);
   
-  // Hook de Som
-  const { playGameOver } = useGameSound();
+  // 1. Estado para controlar o Modal
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  
+  // 2. Ref para lembrar qual era o nível anterior
+  const prevLevelRef = useRef(level);
 
-  // Monitora a vida para decretar Game Over
+  // 3. Hooks de Som (Vitória!)
+  const { playGameOver, playWin } = useGameSound();
+
+  // --- EFEITO DE LEVEL UP ---
+  useEffect(() => {
+    // Se o nível atual for MAIOR que o anterior...
+    if (level > prevLevelRef.current) {
+      setShowLevelUp(true); // Abre o modal
+      playWin(); // Toca som de vitória! 🎺
+      
+      // Se não tiver monstro na tela (caso tenha matado o último), busca um novo
+      if (!question) fetchNewMonster();
+    }
+    // Atualiza a referência para a próxima vez
+    prevLevelRef.current = level;
+  }, [level, playWin]); 
+
+
+  // Monitora Game Over
   useEffect(() => {
     if (hp <= 0 && !isGameOver) {
       setIsGameOver(true);
       setQuestion(null);
-      playGameOver(); // Toca som de morte
+      playGameOver();
       toast.error("VOCÊ FOI DERROTADO!");
     }
   }, [hp, isGameOver, playGameOver]);
@@ -59,9 +81,8 @@ export default function Home() {
   const handleAttack = async (isCorrect: boolean) => {
     if (isCorrect) {
       toast.success("CRÍTICO! Inimigo derrotado!");
-      addXp(50);
+      addXp(50); // <-- Isso aqui vai disparar o useEffect do Level Up
       
-      // Loop infinito: chama o próximo monstro automaticamente
       setTimeout(() => {
         fetchNewMonster(); 
       }, 1000);
@@ -75,11 +96,13 @@ export default function Home() {
   const handleRestart = () => {
     resetGame();
     setIsGameOver(false);
-    setQuestion(null); 
+    setQuestion(null);
+    prevLevelRef.current = 1; // Reseta a referência de nível
   };
 
-  // --- TELA DE GAME OVER ---
+  // --- RENDER ---
   if (isGameOver) {
+    // (Mantenha o código do Game Over igual ao anterior)
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-slate-950 text-slate-100 animate-in fade-in duration-1000">
         <div className="text-center space-y-6">
@@ -101,14 +124,21 @@ export default function Home() {
     );
   }
 
-  // --- TELA PRINCIPAL (Lobby + Batalha) ---
   return (
     <main className="flex min-h-screen flex-col items-center justify-start p-4 md:p-8 gap-6 bg-slate-950 text-slate-100">
       
-      {/* HUD Limpo (Topo) */}
+      {/* 4. MODAL DE LEVEL UP (Invisível até ativar) */}
+      <LevelUpModal 
+        open={showLevelUp} 
+        newLevel={level} 
+        onClose={() => setShowLevelUp(false)} 
+      />
+
+      {/* --- HUD --- */}
       {(question || loading) && (
         <div className="w-full max-w-4xl flex justify-between items-center bg-slate-900/80 p-4 rounded-xl border border-slate-800 backdrop-blur sticky top-4 z-50 shadow-2xl">
-          <div className="flex items-center gap-2 text-red-500 font-bold">
+          {/* (Código do HUD igual ao anterior) */}
+           <div className="flex items-center gap-2 text-red-500 font-bold">
             <div className="flex">
               {Array.from({ length: 3 }).map((_, i) => (
                 <Heart 
@@ -125,6 +155,7 @@ export default function Home() {
                 <Trophy className="h-6 w-6" />
              </div>
              <div className="w-32 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                {/* DICA: Ajuste o width para refletir o XP do nível atual, não total */}
                 <div 
                   className="h-full bg-yellow-500 transition-all duration-500" 
                   style={{ width: `${(xp % 1000) / 10}%` }} 
@@ -135,14 +166,14 @@ export default function Home() {
         </div>
       )}
 
-      {/* Área Central */}
+      {/* Área Principal */}
       <div className="w-full flex flex-col items-center justify-center flex-1 max-w-5xl relative z-10 pb-10">
         {!question && !loading ? (
           
-          // LOBBY ORIGINAL (Logo e Botão Roxo)
+          // LOBBY (Igual ao anterior)
           <div className="text-center space-y-8 animate-in fade-in zoom-in duration-700 mt-10">
-            
-            <div className="relative w-80 h-80 md:w-96 md:h-96 mx-auto group">
+             {/* (Código da Logo e Botão igual ao anterior) */}
+             <div className="relative w-80 h-80 md:w-96 md:h-96 mx-auto group">
               <div className="absolute inset-0 bg-purple-600/20 blur-[60px] rounded-full opacity-60 animate-pulse" />
               <Image 
                 src="/logo.png" 
@@ -153,12 +184,10 @@ export default function Home() {
                 priority
               />
             </div>
-
             <div className="space-y-6">
               <p className="text-slate-400 text-lg max-w-md mx-auto">
                 Enfrente os monstros do conhecimento. Sua sabedoria é sua única arma.
               </p>
-              
               <Button 
                 size="lg" 
                 className="bg-purple-700 hover:bg-purple-600 text-white font-bold text-xl px-12 py-8 h-auto rounded-xl shadow-[0_0_30px_rgba(147,51,234,0.3)] border border-purple-500/30 transition-all hover:scale-105 active:scale-95"
@@ -172,7 +201,7 @@ export default function Home() {
 
         ) : (
           
-          // MODO BATALHA
+          // MODO BATALHA (Igual ao anterior)
           <div className="w-full flex justify-center min-h-[400px]">
             {loading ? (
               <div className="flex flex-col items-center gap-4 mt-20 animate-pulse">
