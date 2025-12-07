@@ -3,11 +3,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Monster } from "@/types/game";
-import { Progress } from "@/components/ui/progress";
 import { Swords, Skull, Flame, Scroll, Image as ImageIcon } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-// 1. Importando o Hook de Som
 import { useGameSound } from "@/hooks/use-game-sound";
 
 interface BattleCardProps {
@@ -19,32 +17,28 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isShaking, setIsShaking] = useState(false);
   
-  // 2. Inicializando os sons
   const { playHit, playMiss } = useGameSound();
 
-  // Runas decorativas para o topo da pedra
   const RUNES = "ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚹ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛊ ᛏ ᛒ ᛖ ᛗ";
 
   const handleOptionClick = (optionId: string, isCorrect: boolean) => {
-    // Evita clique duplo
     if (selectedOption !== null) return;
     
     setSelectedOption(optionId);
     
-    // 3. Lógica de Som e Animação
     if (isCorrect) {
-      playHit(); // Som de Espada! ⚔️
+      playHit(); 
     } else {
-      playMiss(); // Som de Dano! 🛡️
+      playMiss();
       setIsShaking(true);
       setTimeout(() => setIsShaking(false), 500);
     }
 
-    // Delay para o jogador ver o resultado (pedra verde/vermelha) antes de trocar
+    // AUMENTAMOS O TEMPO: 2.5s para o jogador ver qual era a certa
     setTimeout(() => {
       onAttack(isCorrect);
       setSelectedOption(null);
-    }, 1500);
+    }, 2500);
   };
 
   return (
@@ -53,23 +47,20 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
       transition={{ duration: 0.4 }}
       className="w-full max-w-4xl mx-auto px-4 mt-8 perspective-1000"
     >
-      {/* 1. MOLDURA DE PEDRA (O Monólito) */}
+      {/* 1. MOLDURA DE PEDRA */}
       <div className="relative bg-dungeon-stone rounded-xl border-x-[6px] border-t-[6px] border-b-[12px] border-[#292524] shadow-[0_0_100px_rgba(88,28,135,0.4)] overflow-hidden">
         
-        {/* Adornos: Parafusos nos cantos superiores */}
+        {/* Adornos */}
         <div className="absolute top-4 left-4 w-3 h-3 rounded-full bg-black/60 border border-white/10 shadow-inner z-20" />
         <div className="absolute top-4 right-4 w-3 h-3 rounded-full bg-black/60 border border-white/10 shadow-inner z-20" />
 
-        {/* 2. CABEÇALHO (Runas + Título) */}
+        {/* 2. CABEÇALHO */}
         <div className="relative bg-black/40 border-b-4 border-[#1c1917] p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          
-          {/* Faixa de Runas Brilhantes */}
           <div className="absolute top-1 left-0 w-full text-center text-[10px] text-rune-glow opacity-30 font-mono tracking-[1.5em] select-none pointer-events-none">
             {RUNES}
           </div>
 
           <div className="flex items-center gap-4 z-10 w-full">
-            {/* Ícone de Dificuldade (Losango de Pedra) */}
             <div className={`
               w-16 h-16 flex-shrink-0 flex items-center justify-center border-4 rotate-45 shadow-2xl 
               ${monster.difficulty === 'boss' ? 'bg-red-950 border-red-800' : 'bg-stone-800 border-stone-600'}
@@ -94,7 +85,6 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
             </div>
           </div>
 
-          {/* Barra de Vida Inimiga */}
           <div className="w-full md:w-48 z-10">
             <div className="flex justify-between text-[10px] text-stone-400 font-bold uppercase mb-1">
               <span>HP Inimigo</span>
@@ -109,23 +99,17 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
           </div>
         </div>
 
-        {/* 3. CORPO (O Pergaminho) */}
+        {/* 3. CORPO */}
         <div className="p-6 md:p-8 bg-[#151412] relative">
-          
-          {/* Área do Papel */}
           <div className="bg-parchment p-6 md:p-10 rounded-sm shadow-xl relative transform md:-rotate-[0.5deg] transition-transform hover:rotate-0 duration-500">
-            
-            {/* "Selo" Vermelho no topo */}
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-red-900 border-2 border-red-700 shadow-lg z-20 flex items-center justify-center">
               <div className="w-4 h-4 bg-red-950 rounded-full opacity-50" />
             </div>
 
-            {/* Ícone decorativo de pergaminho */}
             <div className="absolute top-4 right-4 text-[#8b4513] opacity-20">
                <Scroll className="w-12 h-12" />
             </div>
 
-            {/* Texto da Questão (Markdown) */}
             <div className="
               prose prose-stone max-w-none 
               prose-p:text-[#292524] prose-p:font-[family-name:var(--font-medieval)] prose-p:text-xl prose-p:leading-loose
@@ -139,7 +123,6 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
               </ReactMarkdown>
             </div>
 
-            {/* Imagem da Questão (Se houver) */}
             {monster.imageUrl && (
               <div className="mt-8 border-4 border-[#57534e]/50 p-2 bg-white/40 rounded shadow-inner rotate-1 group">
                 <div className="relative">
@@ -158,23 +141,31 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
           </div>
         </div>
 
-        {/* 4. RODAPÉ (Botões de Pedra Rúnica) */}
+        {/* 4. RODAPÉ - GABARITO VISUAL */}
         <div className="bg-[#0c0a09] p-6 border-t-4 border-[#292524]">
           <div className="grid gap-3">
             {monster.options.map((opt) => {
-              // Definição dinâmica das classes baseada no estado
-              let btnClass = "btn-stone"; // Padrão (Pedra Cinza)
+              // --- LÓGICA DE GABARITO ---
+              let btnClass = "btn-stone"; 
               let runeClass = "text-stone-500 border-stone-700 bg-[#151412]";
 
-              if (selectedOption === opt.id) {
+              // Se o usuário JÁ escolheu alguma coisa...
+              if (selectedOption !== null) {
+                
+                // Caso 1: Esta é a opção CORRETA? (Sempre brilha verde)
                 if (opt.isCorrect) {
-                  // ACERTO: Pedra Encantada (Verde)
-                  btnClass = "btn-stone-correct";
+                  btnClass = "btn-stone-correct ring-2 ring-green-400 ring-offset-2 ring-offset-black";
                   runeClass = "text-green-200 border-green-500 bg-green-900";
-                } else {
-                  // ERRO: Pedra Amaldiçoada (Vermelha)
-                  btnClass = "btn-stone-wrong";
+                }
+                // Caso 2: O usuário escolheu esta, mas está ERRADA? (Brilha vermelho)
+                else if (selectedOption === opt.id && !opt.isCorrect) {
+                  btnClass = "btn-stone-wrong opacity-50"; // Deixa um pouco opaco pra destacar a verde
                   runeClass = "text-red-200 border-red-500 bg-red-900";
+                }
+                // Caso 3: Não foi escolhida e não é a certa (Apaga um pouco)
+                else {
+                  btnClass = "btn-stone opacity-30 grayscale"; 
+                  runeClass = "text-stone-700 border-stone-800 bg-black";
                 }
               }
 
@@ -184,11 +175,10 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
                   disabled={selectedOption !== null}
                   onClick={() => handleOptionClick(opt.id, opt.isCorrect)}
                   className={`
-                    w-full relative flex items-stretch text-left rounded-sm group transition-all duration-200
+                    w-full relative flex items-stretch text-left rounded-sm group transition-all duration-300
                     ${btnClass}
                   `}
                 >
-                  {/* A Runa Lateral (Letra) */}
                   <div className={`
                     w-14 flex items-center justify-center border-r-2 font-bold text-2xl rune-box
                     transition-colors duration-300
@@ -197,14 +187,12 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
                     {opt.id}
                   </div>
                   
-                  {/* O Texto */}
                   <div className="p-4 flex-1 flex items-center">
                     <span className="leading-snug font-[family-name:var(--font-medieval)] text-lg text-stone-300 group-hover:text-white transition-colors">
                       {opt.text}
                     </span>
                   </div>
 
-                  {/* Brilho hover (só se não tiver clicado) */}
                   {!selectedOption && (
                     <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none mix-blend-overlay rounded-sm" />
                   )}
