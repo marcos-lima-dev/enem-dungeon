@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Swords, Skull, Flame, Scroll, Image as ImageIcon } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-// 1. Importe o hook de som (já está criado, é só usar)
+// 1. Importando o Hook de Som
 import { useGameSound } from "@/hooks/use-game-sound";
 
 interface BattleCardProps {
@@ -19,7 +19,7 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isShaking, setIsShaking] = useState(false);
   
-  // 2. Inicialize os sons
+  // 2. Inicializando os sons
   const { playHit, playMiss } = useGameSound();
 
   // Runas decorativas para o topo da pedra
@@ -31,7 +31,7 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
     
     setSelectedOption(optionId);
     
-    // 3. Toca o som e anima
+    // 3. Lógica de Som e Animação
     if (isCorrect) {
       playHit(); // Som de Espada! ⚔️
     } else {
@@ -40,7 +40,7 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
       setTimeout(() => setIsShaking(false), 500);
     }
 
-    // Delay para o jogador ver o resultado (pedra verde/vermelha)
+    // Delay para o jogador ver o resultado (pedra verde/vermelha) antes de trocar
     setTimeout(() => {
       onAttack(isCorrect);
       setSelectedOption(null);
