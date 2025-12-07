@@ -9,20 +9,26 @@ import { EnemQuestion, Monster } from "@/types/game";
 import { BattleCard } from "@/components/game/BattleCard";
 import { Loader2, Heart, Trophy, Zap, Skull } from "lucide-react";
 import { toast } from "sonner";
+import { useGameSound } from "@/hooks/use-game-sound"; // Import do Som
 
 export default function Home() {
   const { hp, xp, level, takeDamage, addXp, resetGame } = useGameStore();
   const [loading, setLoading] = useState(false);
   const [question, setQuestion] = useState<Monster | null>(null);
   const [isGameOver, setIsGameOver] = useState(false);
+  
+  // Hook de Som
+  const { playGameOver } = useGameSound();
 
+  // Monitora a vida para decretar Game Over
   useEffect(() => {
     if (hp <= 0 && !isGameOver) {
       setIsGameOver(true);
       setQuestion(null);
+      playGameOver(); // Toca som de morte
       toast.error("VOCÊ FOI DERROTADO!");
     }
-  }, [hp, isGameOver]);
+  }, [hp, isGameOver, playGameOver]);
 
   async function fetchNewMonster() {
     if (hp <= 0) return;
@@ -72,6 +78,7 @@ export default function Home() {
     setQuestion(null); 
   };
 
+  // --- TELA DE GAME OVER ---
   if (isGameOver) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-slate-950 text-slate-100 animate-in fade-in duration-1000">
@@ -94,10 +101,11 @@ export default function Home() {
     );
   }
 
+  // --- TELA PRINCIPAL (Lobby + Batalha) ---
   return (
     <main className="flex min-h-screen flex-col items-center justify-start p-4 md:p-8 gap-6 bg-slate-950 text-slate-100">
       
-      {/* HUD Limpo */}
+      {/* HUD Limpo (Topo) */}
       {(question || loading) && (
         <div className="w-full max-w-4xl flex justify-between items-center bg-slate-900/80 p-4 rounded-xl border border-slate-800 backdrop-blur sticky top-4 z-50 shadow-2xl">
           <div className="flex items-center gap-2 text-red-500 font-bold">
@@ -127,11 +135,11 @@ export default function Home() {
         </div>
       )}
 
-      {/* Área Principal */}
+      {/* Área Central */}
       <div className="w-full flex flex-col items-center justify-center flex-1 max-w-5xl relative z-10 pb-10">
         {!question && !loading ? (
           
-          // LOBBY ORIGINAL (O que estava funcionando bem)
+          // LOBBY ORIGINAL (Logo e Botão Roxo)
           <div className="text-center space-y-8 animate-in fade-in zoom-in duration-700 mt-10">
             
             <div className="relative w-80 h-80 md:w-96 md:h-96 mx-auto group">
@@ -164,7 +172,7 @@ export default function Home() {
 
         ) : (
           
-          // Batalha
+          // MODO BATALHA
           <div className="w-full flex justify-center min-h-[400px]">
             {loading ? (
               <div className="flex flex-col items-center gap-4 mt-20 animate-pulse">
