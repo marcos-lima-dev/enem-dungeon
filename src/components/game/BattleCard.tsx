@@ -34,7 +34,6 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
       setTimeout(() => setIsShaking(false), 500);
     }
 
-    // AUMENTAMOS O TEMPO: 2.5s para o jogador ver qual era a certa
     setTimeout(() => {
       onAttack(isCorrect);
       setSelectedOption(null);
@@ -99,9 +98,10 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
           </div>
         </div>
 
-        {/* 3. CORPO */}
+        {/* 3. CORPO (O Pergaminho - AGORA COM TEXTO GIGANTE E ESCURO) */}
         <div className="p-6 md:p-8 bg-[#151412] relative">
           <div className="bg-parchment p-6 md:p-10 rounded-sm shadow-xl relative transform md:-rotate-[0.5deg] transition-transform hover:rotate-0 duration-500">
+            
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-red-900 border-2 border-red-700 shadow-lg z-20 flex items-center justify-center">
               <div className="w-4 h-4 bg-red-950 rounded-full opacity-50" />
             </div>
@@ -110,13 +110,29 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
                <Scroll className="w-12 h-12" />
             </div>
 
+            {/* --- ÁREA DO TEXTO MELHORADA PARA LEITURA --- */}
             <div className="
               prose prose-stone max-w-none 
-              prose-p:text-[#292524] prose-p:font-[family-name:var(--font-medieval)] prose-p:text-xl prose-p:leading-loose
-              prose-headings:text-[#451a03] prose-headings:font-[family-name:var(--font-cinzel)]
-              prose-strong:text-[#7c2d12]
+              
+              /* COR: Preto absoluto para contraste máximo */
+              prose-p:text-black 
+              
+              /* FONTE: MedievalSharp (temática) */
+              prose-p:font-[family-name:var(--font-medieval)] 
+              
+              /* TAMANHO: xl no celular, 2xl no PC (Gigante!) */
+              prose-p:text-xl md:prose-p:text-2xl 
+              
+              /* PESO: Médio/Semibold para encorpar a letra */
+              prose-p:font-medium
+              
+              /* ESPAÇAMENTO: Relaxado para não embolar */
+              prose-p:leading-loose
+              
+              prose-headings:text-[#3f1d0b] prose-headings:font-[family-name:var(--font-cinzel)] prose-headings:font-black
+              prose-strong:text-[#4a0404] prose-strong:font-bold
               prose-img:border-4 prose-img:border-[#57534e] prose-img:rounded-sm prose-img:shadow-md
-              prose-table:border prose-table:border-[#57534e] prose-th:bg-[#d6d3d1] prose-th:p-2 prose-td:p-2
+              prose-table:border prose-table:border-[#57534e] prose-th:bg-[#d6d3d1] prose-th:p-3 prose-td:p-3 prose-td:text-lg
             ">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {monster.fullText}
@@ -141,30 +157,22 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
           </div>
         </div>
 
-        {/* 4. RODAPÉ - GABARITO VISUAL */}
+        {/* 4. RODAPÉ - GABARITO VISUAL (Botões Maiores) */}
         <div className="bg-[#0c0a09] p-6 border-t-4 border-[#292524]">
           <div className="grid gap-3">
             {monster.options.map((opt) => {
-              // --- LÓGICA DE GABARITO ---
               let btnClass = "btn-stone"; 
               let runeClass = "text-stone-500 border-stone-700 bg-[#151412]";
 
-              // Se o usuário JÁ escolheu alguma coisa...
               if (selectedOption !== null) {
-                
-                // Caso 1: Esta é a opção CORRETA? (Sempre brilha verde)
                 if (opt.isCorrect) {
                   btnClass = "btn-stone-correct ring-2 ring-green-400 ring-offset-2 ring-offset-black";
                   runeClass = "text-green-200 border-green-500 bg-green-900";
-                }
-                // Caso 2: O usuário escolheu esta, mas está ERRADA? (Brilha vermelho)
-                else if (selectedOption === opt.id && !opt.isCorrect) {
-                  btnClass = "btn-stone-wrong opacity-50"; // Deixa um pouco opaco pra destacar a verde
+                } else if (selectedOption === opt.id && !opt.isCorrect) {
+                  btnClass = "btn-stone-wrong opacity-90"; 
                   runeClass = "text-red-200 border-red-500 bg-red-900";
-                }
-                // Caso 3: Não foi escolhida e não é a certa (Apaga um pouco)
-                else {
-                  btnClass = "btn-stone opacity-30 grayscale"; 
+                } else {
+                  btnClass = "btn-stone opacity-40 grayscale"; 
                   runeClass = "text-stone-700 border-stone-800 bg-black";
                 }
               }
@@ -180,15 +188,16 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
                   `}
                 >
                   <div className={`
-                    w-14 flex items-center justify-center border-r-2 font-bold text-2xl rune-box
+                    w-16 flex items-center justify-center border-r-2 font-bold text-2xl rune-box
                     transition-colors duration-300
                     ${runeClass}
                   `}>
                     {opt.id}
                   </div>
                   
-                  <div className="p-4 flex-1 flex items-center">
-                    <span className="leading-snug font-[family-name:var(--font-medieval)] text-lg text-stone-300 group-hover:text-white transition-colors">
+                  <div className="p-5 flex-1 flex items-center">
+                    {/* Aumentei a fonte dos botões também para combinar */}
+                    <span className="leading-snug font-[family-name:var(--font-medieval)] text-xl text-stone-200 group-hover:text-white transition-colors font-medium">
                       {opt.text}
                     </span>
                   </div>
