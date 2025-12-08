@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { createMonsterFromQuestion } from "@/lib/monster-factory";
 import { useGameStore } from "@/store/use-game-store";
-import { EnemQuestion, Monster, GameDifficulty } from "@/types/game";
+import { QuestaoLimpa, Monster, GameDifficulty } from "@/types/game";
 import { BattleCard } from "@/components/game/BattleCard";
 import { LevelUpModal } from "@/components/game/LevelUpModal";
 import { GrimoireModal } from "@/components/game/GrimoireModal"; 
@@ -26,8 +26,6 @@ export default function Home() {
 
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [showGrimoire, setShowGrimoire] = useState(false);
-  
-  // Controle visual do botão do grimório (para ele parar de piscar depois de clicado)
   const [hasOpenedGrimoire, setHasOpenedGrimoire] = useState(false);
 
   const prevLevelRef = useRef(level);
@@ -41,7 +39,6 @@ export default function Home() {
     { id: 'linguagens', titulo: 'Arquivo dos Sábios', desc: 'Interpretação de textos, artes e línguas antigas.', icon: BookOpen, color: 'text-red-400', border: 'border-red-500/50', bgHover: 'group-hover:bg-red-900/20', glow: 'group-hover:shadow-[0_0_30px_rgba(239,68,68,0.4)]' },
   ];
 
-  // Monitora Level Up
   useEffect(() => {
     if (level > prevLevelRef.current) {
       setShowLevelUp(true);
@@ -51,7 +48,6 @@ export default function Home() {
     prevLevelRef.current = level;
   }, [level, playWin]); 
 
-  // Monitora Game Over
   useEffect(() => {
     if (hp <= 0 && !isGameOver) {
       setIsGameOver(true);
@@ -70,8 +66,8 @@ export default function Home() {
       const data = await res.json();
       if (!data || !Array.isArray(data) || data.length === 0) throw new Error("Masmorra vazia");
       
-      // Importante: Cast para o tipo correto que vem do JSON limpo
-      const monster = createMonsterFromQuestion(data[0] as unknown as EnemQuestion);
+      // CORREÇÃO 2: Usar QuestaoLimpa aqui também
+      const monster = createMonsterFromQuestion(data[0] as QuestaoLimpa);
       setQuestion(monster);
 
     } catch (error) {
@@ -104,10 +100,9 @@ export default function Home() {
       takeDamage(1);
     }
 
-    // SEMPRE avança para o próximo monstro (com um delay para ler o feedback)
     setTimeout(() => { 
       fetchNewMonster(selectedCategory); 
-    }, 2500); // 2.5s para ver o gabarito
+    }, 2500);
   };
 
   const handleRestart = () => {
@@ -123,7 +118,6 @@ export default function Home() {
     setHasOpenedGrimoire(true);
   };
 
-  // --- TELA DE GAME OVER ---
   if (isGameOver) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-red-950/20 text-slate-100 animate-in fade-in duration-1000 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
@@ -142,7 +136,6 @@ export default function Home() {
     );
   }
 
-  // --- TELA PRINCIPAL ---
   return (
     <main className="flex min-h-screen flex-col items-center justify-start p-4 md:p-8 gap-6 bg-slate-950 text-slate-100 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
       
@@ -155,7 +148,6 @@ export default function Home() {
         <div className="w-full max-w-5xl flex justify-between items-center bg-[#151412] p-3 border-y-4 border-amber-900/40 backdrop-blur sticky top-0 z-50 shadow-2xl">
           
           <div className="flex items-center gap-4">
-             {/* === ÍCONE DO GRIMÓRIO === */}
              <button 
                onClick={handleOpenGrimoire}
                className={`
@@ -179,7 +171,6 @@ export default function Home() {
                }`} />
              </button>
 
-             {/* VIDA */}
              <div className="flex bg-black/50 p-2 rounded border border-stone-800 gap-1">
               {Array.from({ length: maxHp }).map((_, i) => (
                 <Heart 
@@ -212,7 +203,6 @@ export default function Home() {
         
         {!question && !loading ? (
           
-          // LOBBY
           <div className="text-center space-y-10 animate-in fade-in zoom-in duration-700 mt-6 w-full max-w-4xl px-4">
             
             <div className="flex flex-col items-center gap-4">
@@ -228,7 +218,6 @@ export default function Home() {
                </div>
             </div>
 
-            {/* SELETOR DE DIFICULDADE */}
             <div className="flex flex-wrap justify-center gap-4">
               {[
                 { id: 'easy', label: 'Aprendiz', xp: 'Fácil', color: 'text-green-400', border: 'hover:border-green-500' },
@@ -253,7 +242,6 @@ export default function Home() {
               ))}
             </div>
 
-            {/* GRID DE PORTAIS */}
             <div className="flex flex-col gap-4 w-full md:grid md:grid-cols-2">
               {PORTAIS.slice(0, 4).map((portal) => (
                 <button
@@ -310,5 +298,3 @@ export default function Home() {
     </main>
   );
 }
-
-// Atualizando versão v1.3
