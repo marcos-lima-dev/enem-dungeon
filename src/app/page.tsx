@@ -12,7 +12,8 @@ import { useGameSound } from "@/hooks/use-game-sound";
 import { toast } from "sonner";
 import { 
   Loader2, Heart, Trophy, Skull, Brain, 
-  FlaskConical, Hourglass, BookOpen, Sparkles, Swords, Book
+  FlaskConical, Hourglass, BookOpen, Sparkles, Swords, Book,
+  Home as HomeIcon // <--- Ícone da Casa
 } from "lucide-react";
 
 export default function Home() {
@@ -26,6 +27,7 @@ export default function Home() {
 
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [showGrimoire, setShowGrimoire] = useState(false);
+  
   const [hasOpenedGrimoire, setHasOpenedGrimoire] = useState(false);
 
   const prevLevelRef = useRef(level);
@@ -66,7 +68,6 @@ export default function Home() {
       const data = await res.json();
       if (!data || !Array.isArray(data) || data.length === 0) throw new Error("Masmorra vazia");
       
-      // CORREÇÃO 2: Usar QuestaoLimpa aqui também
       const monster = createMonsterFromQuestion(data[0] as QuestaoLimpa);
       setQuestion(monster);
 
@@ -81,6 +82,13 @@ export default function Home() {
   const startGame = (categoria: string) => {
     setSelectedCategory(categoria);
     fetchNewMonster(categoria);
+  };
+
+  // FUNÇÃO DE SAIR (NOVA)
+  const handleExit = () => {
+    setQuestion(null); // Remove o monstro da tela
+    setLoading(false); // Garante que o loading pare
+    // O progresso (HP/XP) já está salvo na Store, não precisa fazer nada extra
   };
 
   const handleAttack = async (isCorrect: boolean) => {
@@ -147,35 +155,50 @@ export default function Home() {
       {(question || loading) && (
         <div className="w-full max-w-5xl flex justify-between items-center bg-[#151412] p-3 border-y-4 border-amber-900/40 backdrop-blur sticky top-0 z-50 shadow-2xl">
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+             
+             {/* 1. BOTÃO SAIR (HOME) */}
+             <button 
+               onClick={handleExit}
+               className="group w-10 h-10 flex items-center justify-center rounded-full bg-[#0c0a09] border border-stone-600 hover:border-red-500 hover:bg-red-900/20 transition-all shadow-lg"
+               title="Sair da Masmorra"
+             >
+               <HomeIcon className="w-4 h-4 text-stone-400 group-hover:text-red-400 transition-colors" />
+             </button>
+
+             {/* 2. BOTÃO GRIMÓRIO (PULSANTE) */}
              <button 
                onClick={handleOpenGrimoire}
                className={`
-                 relative group w-12 h-12 flex items-center justify-center rounded-full bg-[#0c0a09] 
-                 border-2 transition-all duration-300 hover:scale-110 shadow-lg
+                 relative group w-10 h-10 flex items-center justify-center rounded-full bg-[#0c0a09] 
+                 border transition-all duration-300 hover:scale-110 shadow-lg
                  ${hasOpenedGrimoire 
-                    ? 'border-stone-700 hover:border-stone-500' 
-                    : 'border-amber-500 hover:border-amber-300 shadow-amber-900/50' 
+                    ? 'border-stone-600 hover:border-amber-500 hover:bg-amber-900/20' 
+                    : 'border-amber-500 shadow-amber-900/50' 
                  }
                `}
-               title="Ver Histórico de Batalhas"
+               title="Ver Histórico"
              >
                {!hasOpenedGrimoire && (
                  <div className="absolute inset-0 rounded-full bg-amber-600/40 blur-md animate-pulse" />
                )}
                
-               <Book className={`w-5 h-5 transition-colors relative z-10 ${
+               <Book className={`w-4 h-4 transition-colors relative z-10 ${
                  hasOpenedGrimoire 
-                   ? 'text-stone-500 group-hover:text-stone-200' 
+                   ? 'text-stone-400 group-hover:text-amber-400' 
                    : 'text-amber-500 group-hover:text-amber-200'
                }`} />
              </button>
 
+             {/* DIVISOR */}
+             <div className="h-8 w-px bg-stone-700 mx-1" />
+
+             {/* 3. VIDA */}
              <div className="flex bg-black/50 p-2 rounded border border-stone-800 gap-1">
               {Array.from({ length: maxHp }).map((_, i) => (
                 <Heart 
                   key={i} 
-                  className={`h-8 w-8 transition-all duration-300 drop-shadow-md ${
+                  className={`h-5 w-5 transition-all duration-300 drop-shadow-md ${
                     i < hp 
                       ? "fill-red-700 text-red-900 scale-100" 
                       : "fill-stone-900 text-stone-800 scale-90 opacity-50"
@@ -198,11 +221,12 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- ÁREA PRINCIPAL --- */}
+      {/* --- ÁREA PRINCIPAL (Lobby e Batalha) --- */}
       <div className="w-full flex flex-col items-center justify-center flex-1 max-w-6xl relative z-10 pb-10">
         
         {!question && !loading ? (
           
+          // LOBBY
           <div className="text-center space-y-10 animate-in fade-in zoom-in duration-700 mt-6 w-full max-w-4xl px-4">
             
             <div className="flex flex-col items-center gap-4">
@@ -218,6 +242,7 @@ export default function Home() {
                </div>
             </div>
 
+            {/* SELETOR DE DIFICULDADE */}
             <div className="flex flex-wrap justify-center gap-4">
               {[
                 { id: 'easy', label: 'Aprendiz', xp: 'Fácil', color: 'text-green-400', border: 'hover:border-green-500' },
@@ -242,6 +267,7 @@ export default function Home() {
               ))}
             </div>
 
+            {/* GRID DE PORTAIS */}
             <div className="flex flex-col gap-4 w-full md:grid md:grid-cols-2">
               {PORTAIS.slice(0, 4).map((portal) => (
                 <button
