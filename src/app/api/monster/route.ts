@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { QuestaoLimpa } from '@/types/game';
 
-// URL do seu Banco de Dados (GitHub Raw)
-const EXTERNAL_DB_URL = 'https://raw.githubusercontent.com/marcos-lima-dev/enem-dungeon-db/main/questoes_limpas.json';
+// 🟢 URL DO SEU BANCO DE DADOS (GitHub Pages)
+const EXTERNAL_DB_URL = 'https://marcos-lima-dev.github.io/enem-dungeon-db/questoes_limpas.json';
 
 export async function GET(request: Request) {
   try {
@@ -10,8 +10,11 @@ export async function GET(request: Request) {
     const categoria = searchParams.get('categoria');
 
     // 1. Busca os dados na nuvem
-    // 'force-cache' orienta o Next.js a guardar isso em cache para ser rápido
-    const response = await fetch(EXTERNAL_DB_URL, { cache: 'force-cache' });
+    // 'force-cache' faz o Next.js guardar na memória (super rápido)
+    // 'next: { revalidate: 3600 }' atualiza o cache a cada 1 hora se você mudar o JSON lá
+    const response = await fetch(EXTERNAL_DB_URL, { 
+      next: { revalidate: 3600 } 
+    });
 
     if (!response.ok) {
       throw new Error(`Erro ao baixar DB: ${response.status}`);
@@ -19,29 +22,24 @@ export async function GET(request: Request) {
 
     const bancoDeQuestoes: QuestaoLimpa[] = await response.json();
 
-    // --- FILTRO DE QUALIDADE (NOVO) ---
-    // Remove questões quebradas (com [[placeholder]] nas alternativas ou sem texto)
+    // Filtro de Segurança (caso o JSON venha vazio)
+    if (!bancoDeQuestoes || !Array.isArray(bancoDeQuestoes) || bancoDeQuestoes.length === 0) {
+      return NextResponse.json({ error: 'Bestiário vazio ou inválido' }, { status: 500 });
+    }
+
+    // --- FILTRO DE QUALIDADE (Igual ao que tínhamos) ---
+    // Remove questões quebradas (placeholder)
     const questoesValidas = bancoDeQuestoes.filter(q => {
-       // 1. Verifica se alguma alternativa tem placeholder ou está vazia
        const temPlaceholder = q.alternativas.some(alt => 
          alt.texto.includes('[[placeholder]]') || alt.texto.trim() === ''
        );
-       
-       // 2. Verifica se o enunciado tem um tamanho mínimo aceitável
        const enunciadoValido = q.enunciado && q.enunciado.length > 10;
-
-       // Só passa se NÃO tiver placeholder E tiver enunciado válido
        return !temPlaceholder && enunciadoValido;
     });
-    // ----------------------------------
-
-    if (questoesValidas.length === 0) {
-      return NextResponse.json({ error: 'Nenhuma questão válida encontrada no bestiário.' }, { status: 500 });
-    }
 
     let questoesFiltradas = questoesValidas;
 
-    // 2. Filtra por Matéria (Mesma lógica de antes, mas usando a lista limpa)
+    // 2. Filtra por Categoria
     if (categoria && categoria !== 'aleatorio') {
       questoesFiltradas = questoesFiltradas.filter(q => {
         const mat = q.materia ? q.materia.toLowerCase() : "";
@@ -55,12 +53,12 @@ export async function GET(request: Request) {
       });
     }
 
-    // Se o filtro for muito restrito e não sobrar nada, usa o banco válido todo como fallback
+    // Fallback: Se o filtro for muito específico e não achar nada, usa tudo
     if (questoesFiltradas.length === 0) {
       questoesFiltradas = questoesValidas;
     }
 
-    // 3. Sorteia um monstro
+    // 3. Sorteio
     const indiceAleatorio = Math.floor(Math.random() * questoesFiltradas.length);
     const questaoSorteada = questoesFiltradas[indiceAleatorio];
 
