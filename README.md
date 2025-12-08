@@ -84,4 +84,4 @@ Este é um projeto Open Source para fins de estudo e portfólio. Sinta-se à von
 
 👨‍💻 Autor
 Desenvolvido por Marcos Lima Focado em Front-End Engineering, UX e React Ecosystem.
-Linkedin: 
+Linkedin: https://www.linkedin.com/in/marcos-de-sousa-lima-1a6a6320

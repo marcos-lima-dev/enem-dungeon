@@ -27,11 +27,10 @@ export default function Home() {
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [showGrimoire, setShowGrimoire] = useState(false);
   
-  // NOVO: Estado para controlar se o aviso do grimório deve parar
-  const [hasOpenedGrimoire, setHasOpenedGrimoire] = useState(false);
+  // REMOVIDO: const [hasOpenedGrimoire, setHasOpenedGrimoire] ... (Não precisamos mais disso)
 
   const prevLevelRef = useRef(level);
-  const { playGameOver, playWin, playHit } = useGameSound(); // Adicionei playHit para o clique do botão
+  const { playGameOver, playWin, playHit } = useGameSound();
 
   const PORTAIS = [
     { id: 'aleatorio', titulo: 'Abismo do Caos', desc: 'Desafios imprevisíveis de todas as escolas do saber.', icon: Sparkles, color: 'text-purple-400', border: 'border-purple-500/50', bgHover: 'group-hover:bg-purple-900/20', glow: 'group-hover:shadow-[0_0_30px_rgba(168,85,247,0.4)]' },
@@ -108,11 +107,10 @@ export default function Home() {
     prevLevelRef.current = 1;
   };
 
-  // Função para abrir o Grimório e parar a notificação
   const handleOpenGrimoire = () => {
-    playHit(); // Som de clique
+    playHit();
     setShowGrimoire(true);
-    setHasOpenedGrimoire(true); // <--- Para de piscar para sempre (nesta sessão)
+    // REMOVIDO: setHasOpenedGrimoire(true);
   };
 
   if (isGameOver) {
@@ -145,30 +143,19 @@ export default function Home() {
         <div className="w-full max-w-5xl flex justify-between items-center bg-[#151412] p-3 border-y-4 border-amber-900/40 backdrop-blur sticky top-0 z-50 shadow-2xl">
           
           <div className="flex items-center gap-4">
-             {/* === ÍCONE DO GRIMÓRIO (COM LÓGICA DE NOTIFICAÇÃO) === */}
+             {/* === ÍCONE DO GRIMÓRIO (AGORA SEMPRE ÉPICO) === */}
              <button 
                onClick={handleOpenGrimoire}
-               className={`
-                 relative group w-12 h-12 flex items-center justify-center rounded-full bg-[#0c0a09] 
-                 border-2 transition-all duration-300 hover:scale-110 shadow-lg
-                 ${hasOpenedGrimoire 
-                    ? 'border-stone-700 hover:border-stone-500' // Estilo "Já vi" (Calmo)
-                    : 'border-amber-500 hover:border-amber-300 shadow-amber-900/50' // Estilo "Novo!" (Pulsante)
-                 }
-               `}
+               className="relative group w-12 h-12 flex items-center justify-center rounded-full bg-[#0c0a09] 
+                 border-2 border-amber-500 hover:border-amber-300 shadow-lg shadow-amber-900/50 
+                 transition-all duration-300 hover:scale-110 hover:-translate-y-1"
                title="Ver Histórico de Batalhas"
              >
-               {/* Só mostra o brilho pulsante se AINDA NÃO abriu */}
-               {!hasOpenedGrimoire && (
-                 <div className="absolute inset-0 rounded-full bg-amber-600/40 blur-md animate-pulse" />
-               )}
+               {/* Pulso Mágico (Sempre Ativo) */}
+               <div className="absolute inset-0 rounded-full bg-amber-600/30 blur-md animate-pulse" />
                
                {/* O Livro */}
-               <Book className={`w-5 h-5 transition-colors relative z-10 ${
-                 hasOpenedGrimoire 
-                   ? 'text-stone-500 group-hover:text-stone-200' 
-                   : 'text-amber-500 group-hover:text-amber-200'
-               }`} />
+               <Book className="w-5 h-5 text-amber-500 group-hover:text-amber-200 transition-colors relative z-10" />
              </button>
 
              {/* VIDA */}
@@ -278,6 +265,7 @@ export default function Home() {
             </div>
             <div className="text-xs text-stone-700 font-mono mt-12 uppercase tracking-widest opacity-40">v1.2 • Crônicas do Vestibular</div>
           </div>
+
         ) : (
           <div className="w-full flex justify-center min-h-[400px] mt-8">
             {loading ? (
