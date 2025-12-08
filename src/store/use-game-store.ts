@@ -16,65 +16,87 @@ interface GameState {
   xp: number;
   level: number;
   difficulty: GameDifficulty;
+  streak: number; // <--- NOVO: Contador de sequência
   history: BattleRecord[];
   
   takeDamage: (amount: number) => void;
-  addXp: (amount: number) => void;
+  // Nova função poderosa que substitui o addXp simples
+  registerCorrectAnswer: () => { leveledUp: boolean, healed: boolean }; 
   resetGame: () => void;
   setDifficulty: (diff: GameDifficulty) => void;
   addToHistory: (record: Omit<BattleRecord, 'id' | 'timestamp'>) => void;
 }
 
-// CONFIGURAÇÃO DE BALANCEAMENTO ⚖️
 const GAME_RULES = {
-  easy:   { hp: 5, xpBase: 50 },   // 5 Vidas (Tanque)
-  medium: { hp: 3, xpBase: 300 },  // 3 Vidas (Padrão)
-  hard:   { hp: 1, xpBase: 1000 }  // 1 Vida (Hardcore)
+  easy:   { hp: 5, xpBase: 50 },
+  medium: { hp: 3, xpBase: 300 },
+  hard:   { hp: 1, xpBase: 1000 }
 };
 
 export const useGameStore = create<GameState>()(
   persist(
     (set, get) => ({
-      // Estado Inicial (Padrão Médio)
       hp: 3,
       maxHp: 3,
       xp: 0,
       level: 1,
       difficulty: 'medium',
+      streak: 0, // Começa zerado
       history: [],
 
-      // Ao mudar a dificuldade, já ajusta a vida máxima e cura o jogador
       setDifficulty: (diff) => {
         const rules = GAME_RULES[diff];
-        set({ 
-          difficulty: diff,
-          maxHp: rules.hp,
-          hp: rules.hp // Reseta a vida para o novo máximo
-        });
+        // Reseta tudo ao mudar dificuldade
+        set({ difficulty: diff, maxHp: rules.hp, hp: rules.hp, streak: 0 });
       },
 
       takeDamage: (amount) => set((state) => {
         const newHp = state.hp - amount;
-        if (newHp <= 0) return { hp: 0 };
-        return { hp: newHp };
+        return { 
+          hp: newHp <= 0 ? 0 : newHp,
+          streak: 0 // <--- ERROU? O COMBO ZERA!
+        };
       }),
 
-      addXp: (amount) => set((state) => {
-        const newXp = state.xp + amount;
+      // AÇÃO DE ACERTO (CÉREBRO DO COMBO)
+      registerCorrectAnswer: () => {
+        const state = get();
+        const rules = GAME_RULES[state.difficulty];
         
-        // Busca a regra baseada na dificuldade ATUAL
-        const xpNeededBase = GAME_RULES[state.difficulty].xpBase;
-        const xpToNextLevel = state.level * xpNeededBase; 
+        let newXp = state.xp + rules.xpBase;
+        let newLevel = state.level;
+        let newHp = state.hp;
+        let newStreak = state.streak + 1; // Aumenta o combo
+        
+        let leveledUp = false;
+        let healed = false;
 
+        // 1. Checa Level Up
+        const xpToNextLevel = state.level * rules.xpBase; 
         if (newXp >= xpToNextLevel) {
-          return {
-            xp: newXp - xpToNextLevel,
-            level: state.level + 1,
-            hp: state.maxHp, // Cura total ao subir de nível
-          };
+          newXp = newXp - xpToNextLevel;
+          newLevel += 1;
+          newHp = state.maxHp; // Level up cura tudo
+          leveledUp = true;
+          healed = true;
+        } 
+        // 2. Checa Combo de Cura (A cada 3 acertos)
+        // Só cura se não estiver de vida cheia
+        else if (newStreak % 3 === 0 && newHp < state.maxHp) {
+          newHp += 1;
+          healed = true;
         }
-        return { xp: newXp };
-      }),
+
+        set({
+          xp: newXp,
+          level: newLevel,
+          hp: newHp,
+          streak: newStreak
+        });
+
+        // Retorna o que aconteceu para a interface avisar o usuário
+        return { leveledUp, healed };
+      },
 
       addToHistory: (record) => set((state) => {
         const newEntry: BattleRecord = {
@@ -85,22 +107,12 @@ export const useGameStore = create<GameState>()(
         return { history: [newEntry, ...state.history].slice(0, 50) };
       }),
 
-      // Ao reiniciar, respeita a dificuldade que estava selecionada
       resetGame: () => {
-        const currentDifficulty = get().difficulty;
-        const rules = GAME_RULES[currentDifficulty];
-        
-        set({
-          hp: rules.hp,
-          maxHp: rules.hp,
-          xp: 0,
-          level: 1,
-          difficulty: currentDifficulty
-        });
+        const state = get();
+        const rules = GAME_RULES[state.difficulty];
+        set({ hp: rules.hp, maxHp: rules.hp, xp: 0, level: 1, streak: 0 });
       }
     }),
-    {
-      name: 'enem-dungeon-savegame',
-    }
+    { name: 'enem-dungeon-savegame' }
   )
 );
