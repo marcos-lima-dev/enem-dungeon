@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { createMonsterFromQuestion } from "@/lib/monster-factory";
 import { useGameStore } from "@/store/use-game-store";
-import { EnemQuestion, Monster, GameDifficulty } from "@/types/game";
+// CORREÇÃO AQUI: Trocamos EnemQuestion por QuestaoLimpa
+import { QuestaoLimpa, Monster, GameDifficulty } from "@/types/game";
 import { BattleCard } from "@/components/game/BattleCard";
 import { LevelUpModal } from "@/components/game/LevelUpModal";
 import { GrimoireModal } from "@/components/game/GrimoireModal"; 
@@ -27,7 +28,7 @@ export default function Home() {
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [showGrimoire, setShowGrimoire] = useState(false);
   
-  // REMOVIDO: const [hasOpenedGrimoire, setHasOpenedGrimoire] ... (Não precisamos mais disso)
+  const [hasOpenedGrimoire, setHasOpenedGrimoire] = useState(false);
 
   const prevLevelRef = useRef(level);
   const { playGameOver, playWin, playHit } = useGameSound();
@@ -66,8 +67,11 @@ export default function Home() {
       if (!res.ok) throw new Error("Falha na comunicação");
       const data = await res.json();
       if (!data || !Array.isArray(data) || data.length === 0) throw new Error("Masmorra vazia");
-      const monster = createMonsterFromQuestion(data[0] as EnemQuestion);
+      
+      // CORREÇÃO AQUI TAMBÉM: Cast para QuestaoLimpa
+      const monster = createMonsterFromQuestion(data[0] as QuestaoLimpa);
       setQuestion(monster);
+
     } catch (error) {
       console.error(error);
       toast.error("Erro ao invocar monstro.");
@@ -110,7 +114,7 @@ export default function Home() {
   const handleOpenGrimoire = () => {
     playHit();
     setShowGrimoire(true);
-    // REMOVIDO: setHasOpenedGrimoire(true);
+    // setHasOpenedGrimoire(true); // Mantido comentado conforme seu último pedido
   };
 
   if (isGameOver) {
@@ -143,19 +147,28 @@ export default function Home() {
         <div className="w-full max-w-5xl flex justify-between items-center bg-[#151412] p-3 border-y-4 border-amber-900/40 backdrop-blur sticky top-0 z-50 shadow-2xl">
           
           <div className="flex items-center gap-4">
-             {/* === ÍCONE DO GRIMÓRIO (AGORA SEMPRE ÉPICO) === */}
+             {/* === ÍCONE DO GRIMÓRIO === */}
              <button 
                onClick={handleOpenGrimoire}
-               className="relative group w-12 h-12 flex items-center justify-center rounded-full bg-[#0c0a09] 
-                 border-2 border-amber-500 hover:border-amber-300 shadow-lg shadow-amber-900/50 
-                 transition-all duration-300 hover:scale-110 hover:-translate-y-1"
+               className={`
+                 relative group w-12 h-12 flex items-center justify-center rounded-full bg-[#0c0a09] 
+                 border-2 transition-all duration-300 hover:scale-110 shadow-lg
+                 ${hasOpenedGrimoire 
+                    ? 'border-stone-700 hover:border-stone-500' 
+                    : 'border-amber-500 hover:border-amber-300 shadow-amber-900/50' 
+                 }
+               `}
                title="Ver Histórico de Batalhas"
              >
-               {/* Pulso Mágico (Sempre Ativo) */}
-               <div className="absolute inset-0 rounded-full bg-amber-600/30 blur-md animate-pulse" />
+               {!hasOpenedGrimoire && (
+                 <div className="absolute inset-0 rounded-full bg-amber-600/40 blur-md animate-pulse" />
+               )}
                
-               {/* O Livro */}
-               <Book className="w-5 h-5 text-amber-500 group-hover:text-amber-200 transition-colors relative z-10" />
+               <Book className={`w-5 h-5 transition-colors relative z-10 ${
+                 hasOpenedGrimoire 
+                   ? 'text-stone-500 group-hover:text-stone-200' 
+                   : 'text-amber-500 group-hover:text-amber-200'
+               }`} />
              </button>
 
              {/* VIDA */}
