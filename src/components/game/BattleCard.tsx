@@ -7,6 +7,8 @@ import { Swords, Skull, Flame, Scroll, Image as ImageIcon } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useGameSound } from "@/hooks/use-game-sound";
+// Importar a store para saber a dificuldade
+import { useGameStore } from "@/store/use-game-store";
 
 interface BattleCardProps {
   monster: Monster;
@@ -18,8 +20,16 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
   const [isShaking, setIsShaking] = useState(false);
   
   const { playHit, playMiss } = useGameSound();
+  const { difficulty } = useGameStore(); // Pegar a dificuldade atual
 
   const RUNES = "ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚹ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛊ ᛏ ᛒ ᛖ ᛗ";
+
+  // Define a cor da borda e do brilho baseado na dificuldade
+  const THEME = {
+    easy: "border-emerald-900 shadow-[0_0_100px_rgba(16,185,129,0.2)]",
+    medium: "border-[#292524] shadow-[0_0_100px_rgba(245,158,11,0.2)]", // Padrão
+    hard: "border-red-950 shadow-[0_0_100px_rgba(220,38,38,0.3)]"
+  };
 
   const handleOptionClick = (optionId: string, isCorrect: boolean) => {
     if (selectedOption !== null) return;
@@ -46,8 +56,8 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
       transition={{ duration: 0.4 }}
       className="w-full max-w-4xl mx-auto px-4 mt-8 perspective-1000"
     >
-      {/* 1. MOLDURA DE PEDRA */}
-      <div className="relative bg-dungeon-stone rounded-xl border-x-[6px] border-t-[6px] border-b-[12px] border-[#292524] shadow-[0_0_100px_rgba(88,28,135,0.4)] overflow-hidden">
+      {/* 1. MOLDURA DE PEDRA (Dinâmica) */}
+      <div className={`relative bg-dungeon-stone rounded-xl border-x-[6px] border-t-[6px] border-b-[12px] overflow-hidden transition-colors duration-500 ${THEME[difficulty]}`}>
         
         {/* Adornos */}
         <div className="absolute top-4 left-4 w-3 h-3 rounded-full bg-black/60 border border-white/10 shadow-inner z-20" />
@@ -98,9 +108,9 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
           </div>
         </div>
 
-        {/* 3. CORPO (O Pergaminho - AGORA COM TEXTO GIGANTE E ESCURO) */}
+        {/* 3. CORPO (Pergaminho - Fonte Grande e Escura) */}
         <div className="p-6 md:p-8 bg-[#151412] relative">
-          <div className="bg-parchment p-6 md:p-10 rounded-sm shadow-xl relative transform md:-rotate-[0.5deg] transition-transform hover:rotate-0 duration-500">
+          <div className="bg-parchment p-6 md:p-10 rounded-sm shadow-xl relative transform md:-rotate-1 hover:rotate-0 transition-transform duration-500">
             
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-red-900 border-2 border-red-700 shadow-lg z-20 flex items-center justify-center">
               <div className="w-4 h-4 bg-red-950 rounded-full opacity-50" />
@@ -110,25 +120,9 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
                <Scroll className="w-12 h-12" />
             </div>
 
-            {/* --- ÁREA DO TEXTO MELHORADA PARA LEITURA --- */}
             <div className="
               prose prose-stone max-w-none 
-              
-              /* COR: Preto absoluto para contraste máximo */
-              prose-p:text-black 
-              
-              /* FONTE: MedievalSharp (temática) */
-              prose-p:font-[family-name:var(--font-medieval)] 
-              
-              /* TAMANHO: xl no celular, 2xl no PC (Gigante!) */
-              prose-p:text-xl md:prose-p:text-2xl 
-              
-              /* PESO: Médio/Semibold para encorpar a letra */
-              prose-p:font-medium
-              
-              /* ESPAÇAMENTO: Relaxado para não embolar */
-              prose-p:leading-loose
-              
+              prose-p:text-black prose-p:font-[family-name:var(--font-medieval)] prose-p:text-xl md:prose-p:text-2xl prose-p:leading-loose prose-p:font-medium
               prose-headings:text-[#3f1d0b] prose-headings:font-[family-name:var(--font-cinzel)] prose-headings:font-black
               prose-strong:text-[#4a0404] prose-strong:font-bold
               prose-img:border-4 prose-img:border-[#57534e] prose-img:rounded-sm prose-img:shadow-md
@@ -157,7 +151,7 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
           </div>
         </div>
 
-        {/* 4. RODAPÉ - GABARITO VISUAL (Botões Maiores) */}
+        {/* 4. RODAPÉ */}
         <div className="bg-[#0c0a09] p-6 border-t-4 border-[#292524]">
           <div className="grid gap-3">
             {monster.options.map((opt) => {
@@ -196,7 +190,6 @@ export function BattleCard({ monster, onAttack }: BattleCardProps) {
                   </div>
                   
                   <div className="p-5 flex-1 flex items-center">
-                    {/* Aumentei a fonte dos botões também para combinar */}
                     <span className="leading-snug font-[family-name:var(--font-medieval)] text-xl text-stone-200 group-hover:text-white transition-colors font-medium">
                       {opt.text}
                     </span>
