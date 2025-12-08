@@ -7,97 +7,49 @@ import { useGameStore } from "@/store/use-game-store";
 import { EnemQuestion, Monster, GameDifficulty } from "@/types/game";
 import { BattleCard } from "@/components/game/BattleCard";
 import { LevelUpModal } from "@/components/game/LevelUpModal";
+import { GrimoireModal } from "@/components/game/GrimoireModal"; 
 import { useGameSound } from "@/hooks/use-game-sound";
 import { toast } from "sonner";
 import { 
   Loader2, Heart, Trophy, Skull, Brain, 
-  FlaskConical, Hourglass, BookOpen, Sparkles, Swords 
+  FlaskConical, Hourglass, BookOpen, Sparkles, Swords, Book
 } from "lucide-react";
 
 export default function Home() {
-  // 1. Hooks da Store (Incluindo Difficulty e SetDifficulty)
-  const { hp, xp, level, takeDamage, addXp, resetGame, difficulty, setDifficulty } = useGameStore();
+  const { hp, xp, level, takeDamage, addXp, resetGame, difficulty, setDifficulty, addToHistory } = useGameStore();
   
   const [loading, setLoading] = useState(false);
   const [question, setQuestion] = useState<Monster | null>(null);
   const [isGameOver, setIsGameOver] = useState(false);
   
-  // Estado da Categoria (Qual masmorra o jogador escolheu?)
   const [selectedCategory, setSelectedCategory] = useState<string>('aleatorio');
 
-  // Estados Visuais (Level Up e Som)
   const [showLevelUp, setShowLevelUp] = useState(false);
-  const prevLevelRef = useRef(level);
-  const { playGameOver, playWin } = useGameSound();
+  const [showGrimoire, setShowGrimoire] = useState(false);
+  
+  // NOVO: Estado para controlar se o aviso do grimório deve parar
+  const [hasOpenedGrimoire, setHasOpenedGrimoire] = useState(false);
 
-  // --- CONFIGURAÇÃO DOS PORTAIS (LORE) ---
+  const prevLevelRef = useRef(level);
+  const { playGameOver, playWin, playHit } = useGameSound(); // Adicionei playHit para o clique do botão
+
   const PORTAIS = [
-    {
-      id: 'aleatorio',
-      titulo: 'Abismo do Caos',
-      desc: 'Desafios imprevisíveis de todas as escolas do saber.',
-      icon: Sparkles,
-      color: 'text-purple-400',
-      border: 'border-purple-500/50',
-      bgHover: 'group-hover:bg-purple-900/20',
-      glow: 'group-hover:shadow-[0_0_30px_rgba(168,85,247,0.4)]'
-    },
-    {
-      id: 'matematica',
-      titulo: 'Torre dos Enigmas',
-      desc: 'Raciocínio lógico e segredos dos números.',
-      icon: Brain,
-      color: 'text-blue-400',
-      border: 'border-blue-500/50',
-      bgHover: 'group-hover:bg-blue-900/20',
-      glow: 'group-hover:shadow-[0_0_30px_rgba(59,130,246,0.4)]'
-    },
-    {
-      id: 'natureza',
-      titulo: 'Câmara dos Alquimistas',
-      desc: 'Experimentos de Química, Física e vida biológica.',
-      icon: FlaskConical,
-      color: 'text-green-400',
-      border: 'border-green-500/50',
-      bgHover: 'group-hover:bg-green-900/20',
-      glow: 'group-hover:shadow-[0_0_30px_rgba(34,197,94,0.4)]'
-    },
-    {
-      id: 'humanas',
-      titulo: 'Relicários do Tempo',
-      desc: 'Mistérios da História, Geografia e Sociedade.',
-      icon: Hourglass,
-      color: 'text-amber-400',
-      border: 'border-amber-500/50',
-      bgHover: 'group-hover:bg-amber-900/20',
-      glow: 'group-hover:shadow-[0_0_30px_rgba(245,158,11,0.4)]'
-    },
-    {
-      id: 'linguagens',
-      titulo: 'Arquivo dos Sábios',
-      desc: 'Interpretação de textos, artes e línguas antigas.',
-      icon: BookOpen,
-      color: 'text-red-400',
-      border: 'border-red-500/50',
-      bgHover: 'group-hover:bg-red-900/20',
-      glow: 'group-hover:shadow-[0_0_30px_rgba(239,68,68,0.4)]'
-    },
+    { id: 'aleatorio', titulo: 'Abismo do Caos', desc: 'Desafios imprevisíveis de todas as escolas do saber.', icon: Sparkles, color: 'text-purple-400', border: 'border-purple-500/50', bgHover: 'group-hover:bg-purple-900/20', glow: 'group-hover:shadow-[0_0_30px_rgba(168,85,247,0.4)]' },
+    { id: 'matematica', titulo: 'Torre dos Enigmas', desc: 'Raciocínio lógico e segredos dos números.', icon: Brain, color: 'text-blue-400', border: 'border-blue-500/50', bgHover: 'group-hover:bg-blue-900/20', glow: 'group-hover:shadow-[0_0_30px_rgba(59,130,246,0.4)]' },
+    { id: 'natureza', titulo: 'Câmara dos Alquimistas', desc: 'Experimentos de Química, Física e vida biológica.', icon: FlaskConical, color: 'text-green-400', border: 'border-green-500/50', bgHover: 'group-hover:bg-green-900/20', glow: 'group-hover:shadow-[0_0_30px_rgba(34,197,94,0.4)]' },
+    { id: 'humanas', titulo: 'Relicários do Tempo', desc: 'Mistérios da História, Geografia e Sociedade.', icon: Hourglass, color: 'text-amber-400', border: 'border-amber-500/50', bgHover: 'group-hover:bg-amber-900/20', glow: 'group-hover:shadow-[0_0_30px_rgba(245,158,11,0.4)]' },
+    { id: 'linguagens', titulo: 'Arquivo dos Sábios', desc: 'Interpretação de textos, artes e línguas antigas.', icon: BookOpen, color: 'text-red-400', border: 'border-red-500/50', bgHover: 'group-hover:bg-red-900/20', glow: 'group-hover:shadow-[0_0_30px_rgba(239,68,68,0.4)]' },
   ];
 
-  // --- EFEITOS E LÓGICA ---
-  
-  // Monitora Level Up
   useEffect(() => {
     if (level > prevLevelRef.current) {
       setShowLevelUp(true);
       playWin();
-      // Se não tiver questão na tela (ex: estava carregando), busca uma nova
       if (!question) fetchNewMonster(selectedCategory);
     }
     prevLevelRef.current = level;
   }, [level, playWin]); 
 
-  // Monitora Game Over
   useEffect(() => {
     if (hp <= 0 && !isGameOver) {
       setIsGameOver(true);
@@ -111,19 +63,12 @@ export default function Home() {
     if (hp <= 0) return;
     setLoading(true);
     try {
-      // Passa a categoria selecionada para a API
       const res = await fetch(`/api/monster?t=${Date.now()}&categoria=${categoria}`);
-      
       if (!res.ok) throw new Error("Falha na comunicação");
       const data = await res.json();
-      
-      if (!data || !Array.isArray(data) || data.length === 0) {
-        throw new Error("Masmorra vazia");
-      }
-
+      if (!data || !Array.isArray(data) || data.length === 0) throw new Error("Masmorra vazia");
       const monster = createMonsterFromQuestion(data[0] as EnemQuestion);
       setQuestion(monster);
-
     } catch (error) {
       console.error(error);
       toast.error("Erro ao invocar monstro.");
@@ -132,21 +77,24 @@ export default function Home() {
     }
   }
 
-  // Inicia o jogo ao clicar em um portal
   const startGame = (categoria: string) => {
     setSelectedCategory(categoria);
     fetchNewMonster(categoria);
   };
 
   const handleAttack = async (isCorrect: boolean) => {
+    if (question) {
+      addToHistory({
+        questionId: question.id,
+        category: question.category,
+        isCorrect: isCorrect
+      });
+    }
+
     if (isCorrect) {
       toast.success("CRÍTICO! Inimigo derrotado!");
       addXp(50);
-      
-      setTimeout(() => { 
-        fetchNewMonster(selectedCategory); 
-      }, 1000);
-      
+      setTimeout(() => { fetchNewMonster(selectedCategory); }, 1000);
     } else {
       toast.error("DANO SOFRIDO! -1 Coração");
       takeDamage(1);
@@ -160,7 +108,13 @@ export default function Home() {
     prevLevelRef.current = 1;
   };
 
-  // --- TELA DE GAME OVER ---
+  // Função para abrir o Grimório e parar a notificação
+  const handleOpenGrimoire = () => {
+    playHit(); // Som de clique
+    setShowGrimoire(true);
+    setHasOpenedGrimoire(true); // <--- Para de piscar para sempre (nesta sessão)
+  };
+
   if (isGameOver) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-red-950/20 text-slate-100 animate-in fade-in duration-1000 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
@@ -179,32 +133,58 @@ export default function Home() {
     );
   }
 
-  // --- TELA PRINCIPAL ---
   return (
     <main className="flex min-h-screen flex-col items-center justify-start p-4 md:p-8 gap-6 bg-slate-950 text-slate-100 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
       
-      {/* Modal de Level Up */}
       <LevelUpModal open={showLevelUp} newLevel={level} onClose={() => setShowLevelUp(false)} />
+      
+      <GrimoireModal isOpen={showGrimoire} onClose={() => setShowGrimoire(false)} />
 
       {/* --- HUD --- */}
       {(question || loading) && (
         <div className="w-full max-w-5xl flex justify-between items-center bg-[#151412] p-3 border-y-4 border-amber-900/40 backdrop-blur sticky top-0 z-50 shadow-2xl">
-          {/* Vida */}
-          <div className="flex items-center gap-2">
+          
+          <div className="flex items-center gap-4">
+             {/* === ÍCONE DO GRIMÓRIO (COM LÓGICA DE NOTIFICAÇÃO) === */}
+             <button 
+               onClick={handleOpenGrimoire}
+               className={`
+                 relative group w-12 h-12 flex items-center justify-center rounded-full bg-[#0c0a09] 
+                 border-2 transition-all duration-300 hover:scale-110 shadow-lg
+                 ${hasOpenedGrimoire 
+                    ? 'border-stone-700 hover:border-stone-500' // Estilo "Já vi" (Calmo)
+                    : 'border-amber-500 hover:border-amber-300 shadow-amber-900/50' // Estilo "Novo!" (Pulsante)
+                 }
+               `}
+               title="Ver Histórico de Batalhas"
+             >
+               {/* Só mostra o brilho pulsante se AINDA NÃO abriu */}
+               {!hasOpenedGrimoire && (
+                 <div className="absolute inset-0 rounded-full bg-amber-600/40 blur-md animate-pulse" />
+               )}
+               
+               {/* O Livro */}
+               <Book className={`w-5 h-5 transition-colors relative z-10 ${
+                 hasOpenedGrimoire 
+                   ? 'text-stone-500 group-hover:text-stone-200' 
+                   : 'text-amber-500 group-hover:text-amber-200'
+               }`} />
+             </button>
+
+             {/* VIDA */}
              <div className="flex bg-black/50 p-2 rounded border border-stone-800">
               {Array.from({ length: 3 }).map((_, i) => (
                 <Heart key={i} className={`h-8 w-8 transition-all duration-300 drop-shadow-md ${i < hp ? "fill-red-700 text-red-900 scale-100" : "fill-stone-900 text-stone-800 scale-90"}`} />
               ))}
              </div>
           </div>
-          {/* XP */}
+
           <div className="flex flex-col items-end w-full max-w-xs">
              <div className="flex items-center gap-3 text-amber-500 font-bold mb-1 font-[family-name:var(--font-cinzel)]">
                 <span className="text-xl drop-shadow-sm text-shadow">{xp} XP</span>
                 <Trophy className="h-5 w-5 text-amber-600" />
              </div>
              <div className="w-full h-2 bg-black border border-stone-600 relative rounded-full overflow-hidden">
-                {/* Aqui ajustamos a barra para mostrar progresso do nível atual */}
                 <div className="h-full bg-gradient-to-r from-amber-800 to-amber-600 transition-all duration-500" style={{ width: `${(xp % (level * 50)) * 2}%` }} />
              </div>
              <span className="text-[10px] text-stone-500 uppercase font-bold mt-1 tracking-widest font-mono">Nível {level}</span>
@@ -217,12 +197,11 @@ export default function Home() {
         
         {!question && !loading ? (
           
-          // --- NOVO LOBBY: ESCOLHA DE PORTAIS ---
-          <div className="text-center space-y-8 animate-in fade-in zoom-in duration-700 mt-6 w-full max-w-4xl px-4">
+          // LOBBY
+          <div className="text-center space-y-10 animate-in fade-in zoom-in duration-700 mt-6 w-full max-w-4xl px-4">
             
-            {/* Header */}
             <div className="flex flex-col items-center gap-4">
-               <div className="relative w-40 h-40 group cursor-default transition-transform hover:scale-105 duration-500">
+               <div className="relative w-48 h-48 group cursor-default transition-transform hover:scale-105 duration-500">
                   <div className="absolute inset-0 bg-purple-600/20 blur-[40px] rounded-full opacity-50 group-hover:opacity-80 transition-opacity" />
                   <Image src="/logo.png" alt="Logo" fill className="object-contain drop-shadow-xl relative z-10" priority />
                </div>
@@ -259,10 +238,8 @@ export default function Home() {
               ))}
             </div>
 
-            {/* GRID DE PORTAIS (Pirâmide) */}
+            {/* GRID DE PORTAIS */}
             <div className="flex flex-col gap-4 w-full md:grid md:grid-cols-2">
-              
-              {/* 4 Primeiros Portais */}
               {PORTAIS.slice(0, 4).map((portal) => (
                 <button
                   key={portal.id}
@@ -274,90 +251,39 @@ export default function Home() {
                   `}
                 >
                   <div className={`absolute inset-0 opacity-0 transition-opacity duration-500 ${portal.bgHover}`} />
-                  
                   <div className="relative z-10 flex items-start gap-5">
-                    <div className={`
-                      p-4 rounded-full bg-black/40 border border-white/10 shadow-inner
-                      transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3
-                    `}>
+                    <div className={`p-4 rounded-full bg-black/40 border border-white/10 shadow-inner transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3`}>
                       <portal.icon className={`w-8 h-8 ${portal.color}`} />
                     </div>
-                    
                     <div className="flex-1">
-                      <h3 className={`text-xl font-bold font-[family-name:var(--font-cinzel)] uppercase tracking-wide mb-1 ${portal.color} drop-shadow-sm`}>
-                        {portal.titulo}
-                      </h3>
-                      <p className="text-stone-400 font-[family-name:var(--font-medieval)] text-sm leading-relaxed group-hover:text-stone-200 transition-colors">
-                        {portal.desc}
-                      </p>
+                      <h3 className={`text-xl font-bold font-[family-name:var(--font-cinzel)] uppercase tracking-wide mb-1 ${portal.color} drop-shadow-sm`}>{portal.titulo}</h3>
+                      <p className="text-stone-400 font-[family-name:var(--font-medieval)] text-sm leading-relaxed group-hover:text-stone-200 transition-colors">{portal.desc}</p>
                     </div>
-
-                    <div className="self-center opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-2 group-hover:translate-x-0">
-                      <Swords className={`w-5 h-5 ${portal.color}`} />
-                    </div>
+                    <div className="self-center opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-2 group-hover:translate-x-0"><Swords className={`w-5 h-5 ${portal.color}`} /></div>
                   </div>
                 </button>
               ))}
-
-              {/* O Último Portal (Centralizado) */}
               <div className="md:col-span-2 flex justify-center">
                 {PORTAIS.slice(4).map((portal) => (
-                    <button
-                    key={portal.id}
-                    onClick={() => startGame(portal.id)}
-                    className={`
-                        group relative overflow-hidden text-left p-6 rounded-lg border-2 bg-dungeon-stone
-                        transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] w-full md:w-[calc(50%-0.5rem)]
-                        ${portal.border} ${portal.glow}
-                    `}
-                    >
-                    <div className={`absolute inset-0 opacity-0 transition-opacity duration-500 ${portal.bgHover}`} />
-                    
-                    <div className="relative z-10 flex items-start gap-5">
-                        <div className={`
-                        p-4 rounded-full bg-black/40 border border-white/10 shadow-inner
-                        transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3
-                        `}>
-                        <portal.icon className={`w-8 h-8 ${portal.color}`} />
+                    <button key={portal.id} onClick={() => startGame(portal.id)} className={`group relative overflow-hidden text-left p-6 rounded-lg border-2 bg-dungeon-stone transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] w-full md:w-[calc(50%-0.5rem)] ${portal.border} ${portal.glow}`}>
+                        <div className={`absolute inset-0 opacity-0 transition-opacity duration-500 ${portal.bgHover}`} />
+                        <div className="relative z-10 flex items-start gap-5">
+                            <div className={`p-4 rounded-full bg-black/40 border border-white/10 shadow-inner transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3`}><portal.icon className={`w-8 h-8 ${portal.color}`} /></div>
+                            <div className="flex-1"><h3 className={`text-xl font-bold font-[family-name:var(--font-cinzel)] uppercase tracking-wide mb-1 ${portal.color} drop-shadow-sm`}>{portal.titulo}</h3><p className="text-stone-400 font-[family-name:var(--font-medieval)] text-sm leading-relaxed group-hover:text-stone-200 transition-colors">{portal.desc}</p></div>
+                            <div className="self-center opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-2 group-hover:translate-x-0"><Swords className={`w-5 h-5 ${portal.color}`} /></div>
                         </div>
-                        
-                        <div className="flex-1">
-                        <h3 className={`text-xl font-bold font-[family-name:var(--font-cinzel)] uppercase tracking-wide mb-1 ${portal.color} drop-shadow-sm`}>
-                            {portal.titulo}
-                        </h3>
-                        <p className="text-stone-400 font-[family-name:var(--font-medieval)] text-sm leading-relaxed group-hover:text-stone-200 transition-colors">
-                            {portal.desc}
-                        </p>
-                        </div>
-
-                        <div className="self-center opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-2 group-hover:translate-x-0">
-                        <Swords className={`w-5 h-5 ${portal.color}`} />
-                        </div>
-                    </div>
                     </button>
                 ))}
               </div>
-
             </div>
-
-            <div className="text-xs text-stone-700 font-mono mt-12 uppercase tracking-widest opacity-40">
-              v1.2 • Crônicas do Vestibular
-            </div>
+            <div className="text-xs text-stone-700 font-mono mt-12 uppercase tracking-widest opacity-40">v1.2 • Crônicas do Vestibular</div>
           </div>
-
         ) : (
-          
-          // --- MODO BATALHA ---
           <div className="w-full flex justify-center min-h-[400px] mt-8">
             {loading ? (
               <div className="flex flex-col items-center gap-6 mt-32 animate-pulse">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-purple-500/20 blur-xl rounded-full" />
-                  <Loader2 className="h-20 w-20 text-stone-400 animate-spin relative z-10" />
-                </div>
-                <p className="text-stone-500 font-[family-name:var(--font-cinzel)] text-2xl tracking-widest uppercase">
-                  Invocando criatura...
-                </p>
+                <div className="relative"><div className="absolute inset-0 bg-purple-500/20 blur-xl rounded-full" /><Loader2 className="h-20 w-20 text-stone-400 animate-spin relative z-10" /></div>
+                <p className="text-stone-500 font-[family-name:var(--font-cinzel)] text-2xl tracking-widest uppercase">Abrindo o Portal...</p>
               </div>
             ) : (
               <BattleCard monster={question!} onAttack={handleAttack} />

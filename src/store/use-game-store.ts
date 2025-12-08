@@ -1,40 +1,48 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { GameDifficulty } from '@/types/game'; // Importe o tipo novo
+import { GameDifficulty } from '@/types/game';
+
+// Definindo o formato do registro de batalha
+export interface BattleRecord {
+  id: string;
+  questionId: string;
+  category: string;
+  isCorrect: boolean;
+  timestamp: number;
+}
 
 interface GameState {
   hp: number;
   maxHp: number;
   xp: number;
   level: number;
-  difficulty: GameDifficulty; // Novo estado
+  difficulty: GameDifficulty;
+  history: BattleRecord[]; // <--- NOVO: Histórico
   
   // Ações
   takeDamage: (amount: number) => void;
   addXp: (amount: number) => void;
   resetGame: () => void;
-  setDifficulty: (diff: GameDifficulty) => void; // Nova ação
+  setDifficulty: (diff: GameDifficulty) => void;
+  addToHistory: (record: Omit<BattleRecord, 'id' | 'timestamp'>) => void; // <--- NOVA AÇÃO
 }
 
-// Configuração de XP por Nível
 const XP_TABLE = {
-  easy: 50,    // 1 Acerto = Level Up (Modo Teste/Gratificação)
-  medium: 300, // 6 Acertos = Level Up (Equilibrado)
-  hard: 1000   // 20 Acertos = Level Up (Modo Vestibulando Real)
+  easy: 50,
+  medium: 300,
+  hard: 1000
 };
 
 export const useGameStore = create<GameState>()(
   persist(
-    (set, get) => ({
-      // --- ESTADOS INICIAIS ---
+    (set) => ({
       hp: 3,
       maxHp: 3,
       xp: 0,
       level: 1,
-      difficulty: 'medium', // Começa no médio
+      difficulty: 'medium',
+      history: [], // Começa vazio
 
-      // --- AÇÕES ---
-      
       setDifficulty: (diff) => set({ difficulty: diff }),
 
       takeDamage: (amount) => set((state) => {
@@ -45,8 +53,6 @@ export const useGameStore = create<GameState>()(
 
       addXp: (amount) => set((state) => {
         const newXp = state.xp + amount;
-        
-        // A Mágica: Calcula o XP necessário baseado na dificuldade escolhida
         const xpNeededBase = XP_TABLE[state.difficulty]; 
         const xpToNextLevel = state.level * xpNeededBase; 
 
@@ -54,18 +60,31 @@ export const useGameStore = create<GameState>()(
           return {
             xp: newXp - xpToNextLevel,
             level: state.level + 1,
-            hp: state.maxHp, // Cura total ao subir de nível
+            hp: state.maxHp,
           };
         }
-
         return { xp: newXp };
+      }),
+
+      // NOVA FUNÇÃO: Grava a batalha
+      addToHistory: (record) => set((state) => {
+        const newEntry: BattleRecord = {
+          id: Math.random().toString(36).substr(2, 9),
+          timestamp: Date.now(),
+          ...record
+        };
+        // Guarda apenas os últimos 50 registros para não pesar
+        return { history: [newEntry, ...state.history].slice(0, 50) };
       }),
 
       resetGame: () => set((state) => ({
         hp: 3,
         xp: 0,
         level: 1,
-        difficulty: state.difficulty // Mantém a dificuldade que o usuário escolheu
+        difficulty: state.difficulty,
+        // Nota: Não limpamos o histórico aqui propositalmente, 
+        // para o jogador ver seu progresso global. 
+        // Se quiser limpar, adicione: history: []
       }))
     }),
     {
