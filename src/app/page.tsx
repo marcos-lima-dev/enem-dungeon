@@ -4,8 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { createMonsterFromQuestion } from "@/lib/monster-factory";
 import { useGameStore } from "@/store/use-game-store";
-// CORREÇÃO AQUI: Trocamos EnemQuestion por QuestaoLimpa
-import { QuestaoLimpa, Monster, GameDifficulty } from "@/types/game";
+import { EnemQuestion, Monster, GameDifficulty } from "@/types/game";
 import { BattleCard } from "@/components/game/BattleCard";
 import { LevelUpModal } from "@/components/game/LevelUpModal";
 import { GrimoireModal } from "@/components/game/GrimoireModal"; 
@@ -17,7 +16,7 @@ import {
 } from "lucide-react";
 
 export default function Home() {
-  const { hp, xp, level, takeDamage, addXp, resetGame, difficulty, setDifficulty, addToHistory } = useGameStore();
+  const { hp, maxHp, xp, level, takeDamage, addXp, resetGame, difficulty, setDifficulty, addToHistory } = useGameStore();
   
   const [loading, setLoading] = useState(false);
   const [question, setQuestion] = useState<Monster | null>(null);
@@ -28,6 +27,7 @@ export default function Home() {
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [showGrimoire, setShowGrimoire] = useState(false);
   
+  // Controle visual do botão do grimório (para ele parar de piscar depois de clicado)
   const [hasOpenedGrimoire, setHasOpenedGrimoire] = useState(false);
 
   const prevLevelRef = useRef(level);
@@ -41,6 +41,7 @@ export default function Home() {
     { id: 'linguagens', titulo: 'Arquivo dos Sábios', desc: 'Interpretação de textos, artes e línguas antigas.', icon: BookOpen, color: 'text-red-400', border: 'border-red-500/50', bgHover: 'group-hover:bg-red-900/20', glow: 'group-hover:shadow-[0_0_30px_rgba(239,68,68,0.4)]' },
   ];
 
+  // Monitora Level Up
   useEffect(() => {
     if (level > prevLevelRef.current) {
       setShowLevelUp(true);
@@ -50,6 +51,7 @@ export default function Home() {
     prevLevelRef.current = level;
   }, [level, playWin]); 
 
+  // Monitora Game Over
   useEffect(() => {
     if (hp <= 0 && !isGameOver) {
       setIsGameOver(true);
@@ -68,8 +70,8 @@ export default function Home() {
       const data = await res.json();
       if (!data || !Array.isArray(data) || data.length === 0) throw new Error("Masmorra vazia");
       
-      // CORREÇÃO AQUI TAMBÉM: Cast para QuestaoLimpa
-      const monster = createMonsterFromQuestion(data[0] as QuestaoLimpa);
+      // Importante: Cast para o tipo correto que vem do JSON limpo
+      const monster = createMonsterFromQuestion(data[0] as unknown as EnemQuestion);
       setQuestion(monster);
 
     } catch (error) {
@@ -97,11 +99,15 @@ export default function Home() {
     if (isCorrect) {
       toast.success("CRÍTICO! Inimigo derrotado!");
       addXp(50);
-      setTimeout(() => { fetchNewMonster(selectedCategory); }, 1000);
     } else {
       toast.error("DANO SOFRIDO! -1 Coração");
       takeDamage(1);
     }
+
+    // SEMPRE avança para o próximo monstro (com um delay para ler o feedback)
+    setTimeout(() => { 
+      fetchNewMonster(selectedCategory); 
+    }, 2500); // 2.5s para ver o gabarito
   };
 
   const handleRestart = () => {
@@ -114,9 +120,10 @@ export default function Home() {
   const handleOpenGrimoire = () => {
     playHit();
     setShowGrimoire(true);
-    // setHasOpenedGrimoire(true); // Mantido comentado conforme seu último pedido
+    setHasOpenedGrimoire(true);
   };
 
+  // --- TELA DE GAME OVER ---
   if (isGameOver) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-red-950/20 text-slate-100 animate-in fade-in duration-1000 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
@@ -135,6 +142,7 @@ export default function Home() {
     );
   }
 
+  // --- TELA PRINCIPAL ---
   return (
     <main className="flex min-h-screen flex-col items-center justify-start p-4 md:p-8 gap-6 bg-slate-950 text-slate-100 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
       
@@ -172,9 +180,16 @@ export default function Home() {
              </button>
 
              {/* VIDA */}
-             <div className="flex bg-black/50 p-2 rounded border border-stone-800">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Heart key={i} className={`h-8 w-8 transition-all duration-300 drop-shadow-md ${i < hp ? "fill-red-700 text-red-900 scale-100" : "fill-stone-900 text-stone-800 scale-90"}`} />
+             <div className="flex bg-black/50 p-2 rounded border border-stone-800 gap-1">
+              {Array.from({ length: maxHp }).map((_, i) => (
+                <Heart 
+                  key={i} 
+                  className={`h-8 w-8 transition-all duration-300 drop-shadow-md ${
+                    i < hp 
+                      ? "fill-red-700 text-red-900 scale-100" 
+                      : "fill-stone-900 text-stone-800 scale-90 opacity-50"
+                  }`} 
+                />
               ))}
              </div>
           </div>

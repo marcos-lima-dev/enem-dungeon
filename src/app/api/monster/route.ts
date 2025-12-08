@@ -19,15 +19,31 @@ export async function GET(request: Request) {
 
     const bancoDeQuestoes: QuestaoLimpa[] = await response.json();
 
-    if (!bancoDeQuestoes || bancoDeQuestoes.length === 0) {
-      return NextResponse.json({ error: 'Bestiário vazio' }, { status: 500 });
+    // --- FILTRO DE QUALIDADE (NOVO) ---
+    // Remove questões quebradas (com [[placeholder]] nas alternativas ou sem texto)
+    const questoesValidas = bancoDeQuestoes.filter(q => {
+       // 1. Verifica se alguma alternativa tem placeholder ou está vazia
+       const temPlaceholder = q.alternativas.some(alt => 
+         alt.texto.includes('[[placeholder]]') || alt.texto.trim() === ''
+       );
+       
+       // 2. Verifica se o enunciado tem um tamanho mínimo aceitável
+       const enunciadoValido = q.enunciado && q.enunciado.length > 10;
+
+       // Só passa se NÃO tiver placeholder E tiver enunciado válido
+       return !temPlaceholder && enunciadoValido;
+    });
+    // ----------------------------------
+
+    if (questoesValidas.length === 0) {
+      return NextResponse.json({ error: 'Nenhuma questão válida encontrada no bestiário.' }, { status: 500 });
     }
 
-    let questoesFiltradas = bancoDeQuestoes;
+    let questoesFiltradas = questoesValidas;
 
-    // 2. Filtra por Matéria (Mesma lógica de antes)
+    // 2. Filtra por Matéria (Mesma lógica de antes, mas usando a lista limpa)
     if (categoria && categoria !== 'aleatorio') {
-      questoesFiltradas = bancoDeQuestoes.filter(q => {
+      questoesFiltradas = questoesFiltradas.filter(q => {
         const mat = q.materia ? q.materia.toLowerCase() : "";
         
         if (categoria === 'matematica') return mat.includes('matem');
@@ -39,9 +55,9 @@ export async function GET(request: Request) {
       });
     }
 
-    // Se o filtro for muito restrito, usa o banco todo como fallback
+    // Se o filtro for muito restrito e não sobrar nada, usa o banco válido todo como fallback
     if (questoesFiltradas.length === 0) {
-      questoesFiltradas = bancoDeQuestoes;
+      questoesFiltradas = questoesValidas;
     }
 
     // 3. Sorteia um monstro
