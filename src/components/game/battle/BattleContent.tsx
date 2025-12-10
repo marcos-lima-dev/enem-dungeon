@@ -22,11 +22,18 @@ export function BattleContent({ monster }: BattleContentProps) {
            <Scroll className="w-12 h-12" />
         </div>
 
-        {/* Texto da Questão */}
+        {/* Texto da Questão - AGORA LEGÍVEL (Sans Serif) */}
         <div className="
           prose prose-stone max-w-none 
-          prose-p:text-black prose-p:font-[family-name:var(--font-medieval)] prose-p:text-xl md:prose-p:text-2xl prose-p:leading-loose prose-p:font-medium
+          
+          /* MUDANÇA AQUI: font-sans para leitura fácil */
+          prose-p:font-sans prose-p:text-black 
+          prose-p:text-lg md:prose-p:text-xl 
+          prose-p:leading-relaxed prose-p:font-medium
+          
+          /* Mantemos os títulos Medievais/Cinzel para dar o clima */
           prose-headings:text-[#3f1d0b] prose-headings:font-[family-name:var(--font-cinzel)] prose-headings:font-black
+          
           prose-strong:text-[#4a0404] prose-strong:font-bold
           prose-img:border-4 prose-img:border-[#57534e] prose-img:rounded-sm prose-img:shadow-md
           prose-table:border prose-table:border-[#57534e] prose-th:bg-[#d6d3d1] prose-th:p-3 prose-td:p-3 prose-td:text-lg

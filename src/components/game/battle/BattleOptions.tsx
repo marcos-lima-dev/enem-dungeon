@@ -37,16 +37,21 @@ export function BattleOptions({ options, selectedOption, onSelect }: BattleOptio
                 ${btnClass}
               `}
             >
+              {/* A Letra (A, B, C...) continua Medieval/Runica para estilo */}
               <div className={`
-                w-16 flex items-center justify-center border-r-2 font-bold text-2xl rune-box
-                transition-colors duration-300
+                w-16 flex-shrink-0 flex items-center justify-center border-r-2 font-bold text-2xl rune-box
+                transition-colors duration-300 font-[family-name:var(--font-cinzel)]
                 ${runeClass}
               `}>
                 {opt.id}
               </div>
               
-              <div className="p-5 flex-1 flex items-center">
-                <span className="leading-snug font-[family-name:var(--font-medieval)] text-xl text-stone-200 group-hover:text-white transition-colors font-medium">
+              <div className="p-4 flex-1 flex items-center">
+                {/* AQUI ESTÁ A MUDANÇA CRUCIAL:
+                   Trocamos 'font-medieval' por 'font-sans'.
+                   Aumentamos a legibilidade com 'text-base md:text-lg' e 'leading-relaxed'.
+                */}
+                <span className="font-sans text-base md:text-lg leading-relaxed text-stone-200 group-hover:text-white transition-colors font-medium">
                   {opt.text}
                 </span>
               </div>
